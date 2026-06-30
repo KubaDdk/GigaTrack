@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GigaTrack</title>
+    <style>
+        :root {
+            --bg:       #07070e;
+            --surface:  #0c0c1a;
+            --surface2: #10102a;
+            --border:   #1a1a35;
+            --blue:     #5b8fff;
+            --purple:   #9b5fff;
+            --gold:     #f0b429;
+            --green:    #4ade80;
+            --red:      #f87171;
+            --text:     #c8c8e8;
+            --muted:    #484868;
+            --grad:     linear-gradient(135deg, #3b6fd8 0%, #8b3ff7 100%);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding: 2.5rem 1rem 4rem;
+        }
+
+        .wrap {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            align-items: start;
+        }
+
+        .top-row .card { margin-bottom: 0; }
+
+        /* ── Header ── */
+        .hdr {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .hdr h1 {
+            font-size: 2rem;
+            font-weight: 200;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            background: var(--grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hdr-sub {
+            margin-top: 0.4rem;
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            transition: color 0.3s;
+        }
+        .hdr-sub.ok { color: var(--green); }
+
+        /* ── Cards ── */
+        .card {
+            position: relative;
+            z-index: 0;
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(91, 143, 255, 0.25);
+        }
+
+        .card-label {
+            font-size: 0.58rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--blue);
+            margin-bottom: 1.4rem;
+        }
+
+        /* ── Setup ── */
+        .setup-desc {
+            font-size: 0.85rem;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 1.4rem;
+        }
+
+        .setup-desc code {
+            color: var(--blue);
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+
+        .setup-btns {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        /* ── Form ── */
+        .field {
+            margin-bottom: 1.2rem;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.58rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.45rem;
+        }
+
+        .field input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 0.72rem 0.9rem;
+            font-size: 0.95rem;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .field input:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(91, 143, 255, 0.12);
+        }
+
+        .field input[type="number"]::-webkit-inner-spin-button,
+        .field input[type="number"]::-webkit-outer-spin-button { opacity: 0.4; }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.5) sepia(1) hue-rotate(200deg) saturate(2);
+            cursor: pointer;
+        }
+
+        .macro-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 0.72rem 1.4rem;
+            transition: opacity 0.15s, transform 0.1s;
+            white-space: nowrap;
+        }
+        .btn:hover  { opacity: 0.82; }
+        .btn:active { transform: scale(0.97); }
+
+        .btn-primary {
+            background: #26263a;
+            color: #c8c8e8;
+            width: 100%;
+            padding: 0.85rem;
+            margin-top: 0.3rem;
+            border: 1px solid rgba(91, 143, 255, 0.2);
+        }
+        .btn-primary:hover { background: #2e2e46; }
+
+        .btn-ghost {
+            background: #1e1e2e;
+            color: var(--blue);
+            border: 1px solid rgba(91, 143, 255, 0.2);
+            flex: 1;
+        }
+        .btn-ghost:hover { background: #26263a; border-color: rgba(91,143,255,0.4); }
+
+        /* ── Snackbar ── */
+        .snackbar {
+            position: fixed;
+            bottom: 1.75rem;
+            right: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.7rem 1.1rem;
+            border-radius: 10px;
+            background: var(--bg);
+            border: 1px solid rgba(91, 143, 255, 0.25);
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            transform: translateY(calc(100% + 2rem));
+            opacity: 0;
+            transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .snackbar.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .snackbar .sb-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .snackbar.ok  .sb-dot { background: var(--green); }
+        .snackbar.err .sb-dot { background: var(--red); }
+        .snackbar.ok  { color: var(--text); border-color: rgba(74,222,128,0.2); }
+        .snackbar.err { color: var(--red);  border-color: rgba(248,113,113,0.2); }
+
+        /* ── Summary ── */
+        .summary-layout {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .summary-macros {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+        }
+
+        .sm-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .sm-tag {
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            width: 48px;
+            flex-shrink: 0;
+        }
+        .sm-tag.fat     { color: var(--gold); }
+        .sm-tag.carbs   { color: var(--blue); }
+        .sm-tag.protein { color: var(--purple); }
+
+        .sm-val {
+            font-size: 2.2rem;
+            font-weight: 200;
+            line-height: 1;
+            width: 56px;
+            flex-shrink: 0;
+            text-align: right;
+        }
+        .sm-val.fat     { color: var(--gold); }
+        .sm-val.carbs   { color: var(--blue); }
+        .sm-val.protein { color: var(--purple); }
+
+        .sm-unit {
+            font-size: 0.6rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+
+        /* ── History ── */
+        .hist-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .hist-table th {
+            font-size: 0.56rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 0.4rem 0.7rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hist-table td {
+            padding: 0.65rem 0.7rem;
+            font-size: 0.88rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            cursor: pointer;
+        }
+
+        .hist-table tr:hover td { background: var(--surface2); }
+        .hist-table tr:last-child td { border-bottom: none; }
+
+        .hist-table td.c-date {
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            color: var(--muted);
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+        .hist-table td.c-date.today { color: var(--green); }
+
+        .hist-table td.c-fat     { color: var(--gold); }
+        .hist-table td.c-carbs   { color: var(--blue); }
+        .hist-table td.c-protein { color: var(--purple); }
+        .hist-table td.c-kcal    { color: var(--muted); font-size: 0.78rem; }
+        .hist-table td.c-weight  { color: var(--green); }
+        .hist-table td.c-waist   { color: #c084fc; }
+
+        .arrow { font-size: 0.6rem; font-weight: 700; margin-left: 0.2rem; letter-spacing: 0; }
+        .arrow.up { color: var(--red); }
+        .arrow.dn { color: var(--green); }
+        .arrow.eq { color: var(--muted); }
+
+        /* ── Measurements summary display ── */
+        .meas-display {
+            display: flex;
+            gap: 2.5rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .meas-block { text-align: center; }
+
+        .meas-lbl {
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .meas-lbl.weight { color: var(--green); }
+        .meas-lbl.waist  { color: #c084fc; }
+
+        .meas-num {
+            font-size: 2.2rem;
+            font-weight: 200;
+            line-height: 1;
+        }
+        .meas-num.weight { color: var(--green); }
+        .meas-num.waist  { color: #c084fc; }
+
+        .meas-unt {
+            font-size: 0.6rem;
+            color: var(--muted);
+            margin-top: 0.2rem;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.82rem;
+            padding: 2rem;
+        }
+
+        /* ── Cardio type pills ── */
+        .type-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .type-pill {
+            padding: 0.28rem 0.75rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .type-pill[data-type="run"].active,    .type-pill[data-type="run"]:hover    { border-color:#f97316; color:#f97316; background:rgba(249,115,22,.09); }
+        .type-pill[data-type="walk"].active,   .type-pill[data-type="walk"]:hover   { border-color:#4ade80; color:#4ade80; background:rgba(74,222,128,.09); }
+        .type-pill[data-type="bike"].active,   .type-pill[data-type="bike"]:hover   { border-color:#5b8fff; color:#5b8fff; background:rgba(91,143,255,.09); }
+        .type-pill[data-type="stairs"].active, .type-pill[data-type="stairs"]:hover { border-color:#f0b429; color:#f0b429; background:rgba(240,180,41,.09); }
+        .type-pill[data-type="other"].active,  .type-pill[data-type="other"]:hover  { border-color:#9b5fff; color:#9b5fff; background:rgba(155,95,255,.09); }
+
+        /* ── Goals card ── */
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .card-header .card-label { margin-bottom: 0; }
+
+        .goals-summary {
+            font-size: 0.68rem;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+        }
+
+        .goals-summary span { color: var(--text); }
+
+        .chevron {
+            color: var(--muted);
+            font-size: 0.65rem;
+            transition: transform 0.25s;
+            flex-shrink: 0;
+        }
+        .chevron.open { transform: rotate(180deg); }
+
+        .collapsible {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease;
+        }
+        .collapsible.open { max-height: 400px; }
+
+        .collapsible-inner { padding-top: 1.4rem; }
+
+        /* ── Progress bars ── */
+        .sm-progress {
+            flex: 1;
+        }
+
+        .pb-track {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .pb-fill {
+            height: 100%;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .pb-fill.fat     { background: var(--gold); }
+        .pb-fill.carbs   { background: var(--blue); }
+        .pb-fill.protein { background: var(--purple); }
+
+        .pb-label {
+            margin-top: 0.3rem;
+            font-size: 0.58rem;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Chart ── */
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .range-btns { display: flex; gap: 0.35rem; }
+
+        .range-btn {
+            padding: 0.28rem 0.65rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+        .range-btn:hover  { border-color: var(--blue); color: var(--blue); }
+        .range-btn.active { background: #1a1a2e; border-color: var(--blue); color: var(--blue); }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.65rem;
+            color: var(--muted);
+        }
+
+        .legend-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <header class="hdr">
+        <h1>GigaTrack</h1>
+        <div class="hdr-sub" id="fileStatus">no data file connected</div>
+    </header>
+
+    <!-- Setup card (shown until file connected) -->
+    <div class="card" id="setupCard">
+        <div class="card-label">Connect Data File</div>
+        <p class="setup-desc">
+            Choose your <code>data.json</code> file or create a new one.
+            All data stays on your machine — nothing is uploaded.<br><br>
+            <span style="color:var(--blue);font-size:0.75rem">Requires Chrome or Edge (File System Access API).</span>
+        </p>
+        <div class="setup-btns" id="setupBtns">
+            <button class="btn btn-ghost" onclick="openExisting()">Open Existing</button>
+            <button class="btn btn-ghost" onclick="createNew()">Create New</button>
+        </div>
+    </div>
+
+    <!-- Main app (hidden until connected) -->
+    <div id="mainApp" style="display:none">
+
+        <div class="top-row">
+        <!-- Food Entry -->
+        <div class="card">
+            <div class="card-label">Food Entry</div>
+            <div class="field">
+                <label>Date</label>
+                <input type="date" id="entryDate">
+            </div>
+            <div class="macro-row">
+                <div class="field">
+                    <label>Fat (g)</label>
+                    <input type="number" id="fatInput" min="0" step="0.1" placeholder="0">
+                </div>
+                <div class="field">
+                    <label>Carbs (g)</label>
+                    <input type="number" id="carbsInput" min="0" step="0.1" placeholder="0">
+                </div>
+                <div class="field">
+                    <label>Protein (g)</label>
+                    <input type="number" id="proteinInput" min="0" step="0.1" placeholder="0">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
+        </div>
+
+        <!-- Goals card -->
+        <div class="card" id="goalsCard" style="display:none;margin-bottom:0">
+            <div class="card-header" onclick="toggleGoals()">
+                <div>
+                    <div class="card-label">Daily Goals</div>
+                    <div class="goals-summary" id="goalsSummary"></div>
+                </div>
+                <div class="chevron" id="goalsChevron">▼</div>
+            </div>
+            <div class="collapsible" id="goalsBody">
+                <div class="collapsible-inner">
+                    <div class="macro-row">
+                        <div class="field">
+                            <label>Fat goal (g)</label>
+                            <input type="number" id="goalFat" min="0" step="1" placeholder="0">
+                        </div>
+                        <div class="field">
+                            <label>Carbs goal (g)</label>
+                            <input type="number" id="goalCarbs" min="0" step="1" placeholder="0">
+                        </div>
+                        <div class="field">
+                            <label>Protein goal (g)</label>
+                            <input type="number" id="goalProtein" min="0" step="1" placeholder="0">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveGoals()">Save Goals</button>
+                </div>
+            </div>
+        </div>
+        </div><!-- end .top-row -->
+
+        <!-- Body Measurements + Cardio row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem">
+
+            <div class="card" style="margin-bottom:0">
+                <div class="card-label">Body Measurements</div>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="measureDate">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                    <div class="field">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="weightInput" min="0" step="0.1" placeholder="0">
+                    </div>
+                    <div class="field">
+                        <label>Waist (cm)</label>
+                        <input type="number" id="waistInput" min="0" step="0.1" placeholder="0">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveMeasurements()">Save</button>
+            </div>
+
+            <div class="card" style="margin-bottom:0">
+                <div class="card-label">Cardio Session</div>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="cardioDate">
+                </div>
+                <div style="margin-bottom:0.3rem">
+                    <label style="display:block;font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Type</label>
+                    <div class="type-pills">
+                        <button class="type-pill active" data-type="run"    onclick="selectCardioType(this)">Run</button>
+                        <button class="type-pill"        data-type="walk"   onclick="selectCardioType(this)">Walk</button>
+                        <button class="type-pill"        data-type="bike"   onclick="selectCardioType(this)">Bike</button>
+                        <button class="type-pill"        data-type="stairs" onclick="selectCardioType(this)">Stairs</button>
+                        <button class="type-pill"        data-type="other"  onclick="selectCardioType(this)">Other</button>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                    <div class="field">
+                        <label>Duration (min)</label>
+                        <input type="number" id="cardioDuration" min="0" step="1" placeholder="0">
+                    </div>
+                    <div class="field">
+                        <label>Calories burned</label>
+                        <input type="number" id="cardioCalories" min="0" step="1" placeholder="0">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveCardio()">Log Session</button>
+            </div>
+
+        </div>
+
+        <!-- Summary (visible when selected date has data) -->
+        <div class="card" id="summaryCard" style="display:none">
+            <div class="card-label" id="summaryLabel">Summary</div>
+
+            <div class="summary-layout">
+                <!-- Macro numbers -->
+                <div class="summary-macros">
+                    <div class="sm-item">
+                        <div class="sm-tag fat">Fat</div>
+                        <div class="sm-val fat" id="sFat">—</div>
+                        <div class="sm-unit">g</div>
+                        <div class="sm-progress" id="progFat" style="display:none">
+                            <div class="pb-track"><div class="pb-fill fat" id="pfFat"></div></div>
+                            <div class="pb-label" id="plFat"></div>
+                        </div>
+                    </div>
+                    <div class="sm-item">
+                        <div class="sm-tag carbs">Carbs</div>
+                        <div class="sm-val carbs" id="sCarbs">—</div>
+                        <div class="sm-unit">g</div>
+                        <div class="sm-progress" id="progCarbs" style="display:none">
+                            <div class="pb-track"><div class="pb-fill carbs" id="pfCarbs"></div></div>
+                            <div class="pb-label" id="plCarbs"></div>
+                        </div>
+                    </div>
+                    <div class="sm-item">
+                        <div class="sm-tag protein">Protein</div>
+                        <div class="sm-val protein" id="sProtein">—</div>
+                        <div class="sm-unit">g</div>
+                        <div class="sm-progress" id="progProtein" style="display:none">
+                            <div class="pb-track"><div class="pb-fill protein" id="pfProtein"></div></div>
+                            <div class="pb-label" id="plProtein"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Donut chart -->
+                <svg id="pieChart" viewBox="0 0 100 100" width="160" height="160" style="flex-shrink:0">
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#111128" stroke-width="14"/>
+                    <circle id="pieFat"     cx="50" cy="50" r="36" fill="none" stroke="#f0b429" stroke-width="14"
+                            stroke-dasharray="0 226" stroke-linecap="butt"/>
+                    <circle id="pieCarbs"   cx="50" cy="50" r="36" fill="none" stroke="#5b8fff" stroke-width="14"
+                            stroke-dasharray="0 226" stroke-linecap="butt"/>
+                    <circle id="pieProtein" cx="50" cy="50" r="36" fill="none" stroke="#9b5fff" stroke-width="14"
+                            stroke-dasharray="0 226" stroke-linecap="butt"/>
+                    <text id="pieKcal" x="50" y="47" text-anchor="middle" fill="#c8c8e8"
+                          font-size="13" font-weight="200" font-family="'Segoe UI',system-ui,sans-serif">—</text>
+                    <text x="50" y="58" text-anchor="middle" fill="#484868"
+                          font-size="6" letter-spacing="1.5" font-family="'Segoe UI',system-ui,sans-serif">KCAL</text>
+                </svg>
+            </div>
+
+            <!-- Measurements row (shown when weight/waist logged for this date) -->
+            <div class="meas-display" id="measDisplay" style="display:none">
+                <div class="meas-block">
+                    <div class="meas-lbl weight">Weight</div>
+                    <div class="meas-num weight" id="sWeight">—</div>
+                    <div class="meas-unt">kg</div>
+                </div>
+                <div class="meas-block">
+                    <div class="meas-lbl waist">Waist</div>
+                    <div class="meas-num waist" id="sWaist">—</div>
+                    <div class="meas-unt">cm</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calorie Intake chart -->
+        <div class="card" id="calorieChartCard" style="display:none">
+            <div class="chart-header">
+                <div class="card-label" style="margin-bottom:0">Calorie Intake</div>
+                <div class="range-btns">
+                    <button class="range-btn active" data-cl="1"  onclick="setCalorieRange(1)">1M</button>
+                    <button class="range-btn"         data-cl="3"  onclick="setCalorieRange(3)">3M</button>
+                    <button class="range-btn"         data-cl="6"  onclick="setCalorieRange(6)">6M</button>
+                    <button class="range-btn"         data-cl="12" onclick="setCalorieRange(12)">1Y</button>
+                    <button class="range-btn"         data-cl="24" onclick="setCalorieRange(24)">2Y</button>
+                    <button class="range-btn"         data-cl="60" onclick="setCalorieRange(60)">5Y</button>
+                </div>
+            </div>
+            <svg id="calorieChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
+        </div>
+
+        <!-- Weight & Waist chart -->
+        <div class="card" id="chartCard" style="display:none">
+            <div class="chart-header">
+                <div class="card-label" style="margin-bottom:0">Weight &amp; Waist Trend</div>
+                <div class="range-btns">
+                    <button class="range-btn active" data-m="1"  onclick="setRange(1)">1M</button>
+                    <button class="range-btn"         data-m="3"  onclick="setRange(3)">3M</button>
+                    <button class="range-btn"         data-m="6"  onclick="setRange(6)">6M</button>
+                    <button class="range-btn"         data-m="12" onclick="setRange(12)">1Y</button>
+                    <button class="range-btn"         data-m="24" onclick="setRange(24)">2Y</button>
+                    <button class="range-btn"         data-m="60" onclick="setRange(60)">5Y</button>
+                </div>
+            </div>
+            <svg id="measureChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
+            <div class="chart-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>Weight (kg)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div>Waist (cm)</div>
+            </div>
+        </div>
+
+        <!-- Cardio chart -->
+        <div class="card" id="cardioChartCard" style="display:none">
+            <div class="chart-header">
+                <div class="card-label" style="margin-bottom:0">Cardio Activity</div>
+                <div class="range-btns">
+                    <button class="range-btn active" data-cr="7"  onclick="setCardioRange(7)">1W</button>
+                    <button class="range-btn"         data-cr="14" onclick="setCardioRange(14)">2W</button>
+                    <button class="range-btn"         data-cr="30" onclick="setCardioRange(30)">1M</button>
+                    <button class="range-btn"         data-cr="61" onclick="setCardioRange(61)">2M</button>
+                    <button class="range-btn"         data-cr="91" onclick="setCardioRange(91)">3M</button>
+                </div>
+            </div>
+            <svg id="cardioChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
+            <div class="chart-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>Run</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>Walk</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#5b8fff"></div>Bike</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#f0b429"></div>Stairs</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#9b5fff"></div>Other</div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="card">
+            <div class="card-label">History</div>
+            <div id="histContainer"><div class="empty">No entries yet.</div></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Snackbar -->
+<div class="snackbar" id="snackbar">
+    <span class="sb-dot"></span>
+    <span id="snackText"></span>
+</div>
+
+<script>
+'use strict';
+
+let fh    = null;   // FileSystemFileHandle
+let data  = {};     // { "_goals": {...}, "YYYY-MM-DD": { fat, carbs, protein } }
+let goals = null;   // { fat, carbs, protein }
+
+// ── Init ───────────────────────────────────────────────────────────────────
+addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('entryDate').value   = isoToday();
+    document.getElementById('measureDate').value  = isoToday();
+    document.getElementById('cardioDate').value   = isoToday();
+    document.getElementById('entryDate').addEventListener('change', refreshSummary);
+    await tryRestore();
+});
+
+function isoToday() {
+    return new Date().toISOString().split('T')[0];
+}
+
+// ── File System Access ─────────────────────────────────────────────────────
+async function openExisting() {
+    try {
+        [fh] = await showOpenFilePicker({
+            types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+            multiple: false,
+        });
+        await storeHandle(fh);
+        await loadData();
+        boot();
+    } catch (e) {
+        if (e.name !== 'AbortError') flash('Could not open file: ' + e.message, 'err');
+    }
+}
+
+async function createNew() {
+    try {
+        fh = await showSaveFilePicker({
+            suggestedName: 'data.json',
+            types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+        });
+        data = {};
+        await write();
+        await storeHandle(fh);
+        boot();
+    } catch (e) {
+        if (e.name !== 'AbortError') flash('Could not create file: ' + e.message, 'err');
+    }
+}
+
+async function tryRestore() {
+    try {
+        const db = await idb();
+        const handle = await dbGet(db, 'fh');
+        if (!handle) return;
+        fh = handle;
+        const perm = await fh.queryPermission({ mode: 'readwrite' });
+        if (perm === 'granted') {
+            await loadData();
+            boot();
+        } else {
+            injectReconnectBtn();
+        }
+    } catch { /* first run or storage error */ }
+}
+
+function injectReconnectBtn() {
+    const btns = document.getElementById('setupBtns');
+    const b = document.createElement('button');
+    b.className = 'btn btn-ghost';
+    b.style.order = '-1';
+    b.textContent = 'Reconnect';
+    b.onclick = async () => {
+        try {
+            const perm = await fh.requestPermission({ mode: 'readwrite' });
+            if (perm === 'granted') { await loadData(); boot(); }
+        } catch (e) { flash('Permission denied.', 'err'); }
+    };
+    btns.prepend(b);
+    document.querySelector('.setup-desc').textContent =
+        'Previous data.json found. Click Reconnect to continue, or open/create a different file.';
+}
+
+// ── Data I/O ───────────────────────────────────────────────────────────────
+async function loadData() {
+    try {
+        const file = await fh.getFile();
+        const text = await file.text();
+        data = text.trim() ? JSON.parse(text) : {};
+    } catch { data = {}; }
+}
+
+async function write() {
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify(data, null, 2));
+    await w.close();
+}
+
+// ── App ────────────────────────────────────────────────────────────────────
+function boot() {
+    document.getElementById('setupCard').style.display = 'none';
+    document.getElementById('mainApp').style.display   = 'block';
+    const s = document.getElementById('fileStatus');
+    s.textContent = `connected · ${fh.name}`;
+    s.className = 'hdr-sub ok';
+    goals = data._goals || null;
+    loadGoalsUI();
+    render();
+    refreshSummary();
+    renderCalorieChart();
+    renderChart();
+    renderCardioChart();
+}
+
+async function saveEntry() {
+    const date    = document.getElementById('entryDate').value;
+    if (!date) { flash('Pick a date first.', 'err'); return; }
+
+    const fat     = toNum(document.getElementById('fatInput').value);
+    const carbs   = toNum(document.getElementById('carbsInput').value);
+    const protein = toNum(document.getElementById('proteinInput').value);
+
+    data[date] = { ...(data[date] || {}), fat, carbs, protein };
+
+    try {
+        await write();
+        flash('Saved!', 'ok');
+        render();
+        refreshSummary();
+        renderCalorieChart();
+    } catch (e) {
+        flash('Save failed: ' + e.message, 'err');
+    }
+}
+
+async function saveMeasurements() {
+    const date   = document.getElementById('measureDate').value;
+    if (!date) { flash('Pick a date first.', 'err'); return; }
+    const weight = toNum(document.getElementById('weightInput').value);
+    const waist  = toNum(document.getElementById('waistInput').value);
+    data[date] = { ...(data[date] || {}), weight, waist };
+    try {
+        await write();
+        flash('Measurements saved!', 'ok');
+        render();
+        refreshSummary();
+        renderChart();
+    } catch (e) {
+        flash('Save failed: ' + e.message, 'err');
+    }
+}
+
+function refreshSummary() {
+    const date  = document.getElementById('entryDate').value;
+    const entry = data[date];
+    const card  = document.getElementById('summaryCard');
+
+    if (!entry) { card.style.display = 'none'; return; }
+
+    card.style.display = 'block';
+    const isToday = date === isoToday();
+    document.getElementById('summaryLabel').textContent =
+        isToday ? "Today's Data" : `Data · ${date}`;
+
+    const fat     = entry.fat     ?? 0;
+    const carbs   = entry.carbs   ?? 0;
+    const protein = entry.protein ?? 0;
+
+    document.getElementById('sFat').textContent     = fat;
+    document.getElementById('sCarbs').textContent   = carbs;
+    document.getElementById('sProtein').textContent = protein;
+
+    const kcal = Math.round(fat * 9 + carbs * 4 + protein * 4);
+    drawPie(fat, carbs, protein, kcal);
+    updateProgress(entry);
+
+    // Measurements
+    const measDisplay = document.getElementById('measDisplay');
+    const hasMeas = entry.weight != null || entry.waist != null;
+    measDisplay.style.display = hasMeas ? 'flex' : 'none';
+    if (hasMeas) {
+        document.getElementById('sWeight').textContent = entry.weight ?? '—';
+        document.getElementById('sWaist').textContent  = entry.waist  ?? '—';
+    }
+}
+
+function updateProgress(entry) {
+    const macros = ['Fat', 'Carbs', 'Protein'];
+    const keys   = ['fat', 'carbs', 'protein'];
+    macros.forEach((_, i) => {
+        const key   = keys[i];
+        const cap   = key.charAt(0).toUpperCase() + key.slice(1);
+        const wrap  = document.getElementById('prog' + cap);
+        if (!goals || !goals[key]) { wrap.style.display = 'none'; return; }
+        const pct   = Math.min(100, Math.round((entry[key] / goals[key]) * 100));
+        wrap.style.display = 'block';
+        document.getElementById('pf' + cap).style.width = pct + '%';
+        document.getElementById('pl' + cap).textContent = `${entry[key]} / ${goals[key]}g`;
+    });
+}
+
+function drawPie(fat, carbs, protein, kcal) {
+    const r = 36;
+    const C = 2 * Math.PI * r;   // ≈ 226.19
+    const GAP = 2;                // px gap between segments
+
+    const fatKcal     = fat * 9;
+    const carbsKcal   = carbs * 4;
+    const proteinKcal = protein * 4;
+    const total       = fatKcal + carbsKcal + proteinKcal;
+
+    document.getElementById('pieKcal').textContent = total > 0 ? kcal.toLocaleString() : '—';
+
+    if (total === 0) {
+        ['pieFat','pieCarbs','pieProtein'].forEach(id =>
+            document.getElementById(id).setAttribute('stroke-dasharray', `0 ${C}`)
+        );
+        return;
+    }
+
+    // Scale total arc by progress toward goal (capped at full circle)
+    let totalArc = C;
+    if (goals) {
+        const goalKcal = goals.fat * 9 + goals.carbs * 4 + goals.protein * 4;
+        if (goalKcal > 0) totalArc = Math.min(C, (total / goalKcal) * C);
+    }
+
+    const segs = [
+        { id: 'pieFat',     kcal: fatKcal },
+        { id: 'pieCarbs',   kcal: carbsKcal },
+        { id: 'pieProtein', kcal: proteinKcal },
+    ];
+
+    let offset = -90; // start at top
+    segs.forEach(seg => {
+        const len  = (seg.kcal / total) * totalArc;
+        const draw = Math.max(0, len - GAP);
+        const el   = document.getElementById(seg.id);
+        el.setAttribute('stroke-dasharray', `${draw} ${C - draw}`);
+        el.setAttribute('transform', `rotate(${offset} 50 50)`);
+        offset += (len / C) * 360;
+    });
+}
+
+// ── Goals ──────────────────────────────────────────────────────────────────
+function loadGoalsUI() {
+    const card = document.getElementById('goalsCard');
+    card.style.display = 'block';
+    if (goals) {
+        document.getElementById('goalFat').value     = goals.fat;
+        document.getElementById('goalCarbs').value   = goals.carbs;
+        document.getElementById('goalProtein').value = goals.protein;
+        updateGoalsSummary();
+        // start collapsed when goals already exist
+    } else {
+        // start expanded so user can fill in
+        document.getElementById('goalsBody').classList.add('open');
+        document.getElementById('goalsChevron').classList.add('open');
+    }
+}
+
+function toggleGoals() {
+    document.getElementById('goalsBody').classList.toggle('open');
+    document.getElementById('goalsChevron').classList.toggle('open');
+}
+
+function updateGoalsSummary() {
+    if (!goals) { document.getElementById('goalsSummary').textContent = ''; return; }
+    const kcal = Math.round(goals.fat * 9 + goals.carbs * 4 + goals.protein * 4);
+    document.getElementById('goalsSummary').innerHTML =
+        `<span>${goals.fat}g</span> fat · <span>${goals.carbs}g</span> carbs · <span>${goals.protein}g</span> protein · <span>${kcal.toLocaleString()}</span> kcal`;
+}
+
+async function saveGoals() {
+    const fat     = toNum(document.getElementById('goalFat').value);
+    const carbs   = toNum(document.getElementById('goalCarbs').value);
+    const protein = toNum(document.getElementById('goalProtein').value);
+    goals = { fat, carbs, protein };
+    data._goals = goals;
+    try {
+        await write();
+        flash('Goals saved!', 'ok');
+        updateGoalsSummary();
+        // collapse after saving
+        document.getElementById('goalsBody').classList.remove('open');
+        document.getElementById('goalsChevron').classList.remove('open');
+        refreshSummary();
+    } catch (e) {
+        flash('Save failed: ' + e.message, 'err');
+    }
+}
+
+function render() {
+    const container = document.getElementById('histContainer');
+    const today     = isoToday();
+    const entries   = Object.entries(data)
+        .filter(([k]) => k !== '_goals' && k !== '_cardio')
+        .sort(([a], [b]) => b.localeCompare(a));  // newest first
+
+    if (!entries.length) {
+        container.innerHTML = '<div class="empty">No entries yet.</div>';
+        return;
+    }
+
+    // Compute weight/waist diffs vs previous chronological entry
+    const chrono = [...entries].reverse();  // oldest first
+    const diffs = {};
+    for (let i = 1; i < chrono.length; i++) {
+        const [, prev] = chrono[i - 1];
+        const [date, curr] = chrono[i];
+        diffs[date] = {
+            w: (curr.weight != null && prev.weight != null) ? curr.weight - prev.weight : null,
+            c: (curr.waist  != null && prev.waist  != null) ? curr.waist  - prev.waist  : null,
+        };
+    }
+
+    function arrowHtml(diff) {
+        if (diff == null) return '';
+        const abs = Math.abs(diff).toFixed(1);
+        if (diff > 0.04)  return `<span class="arrow up">↑${abs}</span>`;
+        if (diff < -0.04) return `<span class="arrow dn">↓${abs}</span>`;
+        return `<span class="arrow eq">→</span>`;
+    }
+
+    const rows = entries.map(([date, e]) => {
+        const fat     = e.fat     ?? null;
+        const carbs   = e.carbs   ?? null;
+        const protein = e.protein ?? null;
+        const kcal    = (fat != null) ? Math.round(fat * 9 + carbs * 4 + protein * 4) : null;
+        const dateCls = date === today ? 'c-date today' : 'c-date';
+        const d       = diffs[date] || {};
+        return `<tr onclick="fillForm('${date}')">
+            <td class="${dateCls}">${date}${date === today ? ' ·today' : ''}</td>
+            <td class="c-fat">${fat ?? '—'}</td>
+            <td class="c-carbs">${carbs ?? '—'}</td>
+            <td class="c-protein">${protein ?? '—'}</td>
+            <td class="c-kcal">${kcal != null ? kcal.toLocaleString() : '—'}</td>
+            <td class="c-weight">${e.weight ?? '—'}${e.weight != null ? arrowHtml(d.w) : ''}</td>
+            <td class="c-waist">${e.waist ?? '—'}${e.waist != null ? arrowHtml(d.c) : ''}</td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+        <table class="hist-table">
+            <thead><tr>
+                <th>Date</th>
+                <th>Fat (g)</th>
+                <th>Carbs (g)</th>
+                <th>Protein (g)</th>
+                <th>kcal</th>
+                <th>Weight (kg)</th>
+                <th>Waist (cm)</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+}
+
+// ── Weight & Waist Chart ───────────────────────────────────────────────────
+let chartRange = 1;
+
+function setRange(months) {
+    chartRange = months;
+    document.querySelectorAll('#chartCard .range-btn').forEach(b =>
+        b.classList.toggle('active', +b.dataset.m === months)
+    );
+    renderChart();
+}
+
+function renderChart() {
+    const svg = document.getElementById('measureChart');
+    if (!svg) return;
+
+    // Show card only when any measurement data exists
+    const anyMeas = Object.entries(data).some(([k, e]) =>
+        k !== '_goals' && (e.weight != null || e.waist != null)
+    );
+    document.getElementById('chartCard').style.display = anyMeas ? 'block' : 'none';
+    if (!anyMeas) return;
+
+    // Filter to selected range
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - chartRange);
+    const cutoffISO = cutoff.toISOString().split('T')[0];
+
+    const pts = Object.entries(data)
+        .filter(([k]) => k !== '_goals' && k >= cutoffISO)
+        .filter(([, e]) => e.weight != null || e.waist != null)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, e]) => ({ date, w: e.weight ?? null, c: e.waist ?? null }));
+
+    const W = 680, H = 200, PL = 52, PR = 52, PT = 14, PB = 34;
+    const CW = W - PL - PR, CH = H - PT - PB;
+
+    if (pts.length === 0) {
+        svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle"
+            fill="#484868" font-size="11" font-family="'Segoe UI',sans-serif">No data in this range.</text>`;
+        return;
+    }
+
+    // X scale
+    const tMin = new Date(pts[0].date).getTime();
+    const tMax = new Date(pts[pts.length - 1].date).getTime();
+    const tSpan = tMax - tMin || 1;
+    const xOf = d => PL + ((new Date(d).getTime() - tMin) / tSpan) * CW;
+
+    // Y scale builder
+    function makeScale(vals) {
+        if (!vals.length) return null;
+        let lo = Math.min(...vals), hi = Math.max(...vals);
+        if (lo === hi) { lo -= 1; hi += 1; }
+        const pad = (hi - lo) * 0.18;
+        lo -= pad; hi += pad;
+        return { lo, hi, y: v => PT + (1 - (v - lo) / (hi - lo)) * CH };
+    }
+
+    const wScale = makeScale(pts.filter(p => p.w != null).map(p => p.w));
+    const cScale = makeScale(pts.filter(p => p.c != null).map(p => p.c));
+
+    let out = '';
+
+    // Horizontal grid
+    for (let i = 0; i <= 4; i++) {
+        const y = PT + (i / 4) * CH;
+        out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#111128" stroke-width="1"/>`;
+    }
+
+    // Left Y axis (weight)
+    if (wScale) {
+        for (let i = 0; i <= 4; i++) {
+            const v = wScale.hi - (i / 4) * (wScale.hi - wScale.lo);
+            out += `<text x="${PL-7}" y="${PT+(i/4)*CH+4}" text-anchor="end"
+                fill="#4ade80" font-size="9" opacity="0.75"
+                font-family="'Segoe UI',sans-serif">${v.toFixed(1)}</text>`;
+        }
+    }
+
+    // Right Y axis (waist)
+    if (cScale) {
+        for (let i = 0; i <= 4; i++) {
+            const v = cScale.hi - (i / 4) * (cScale.hi - cScale.lo);
+            out += `<text x="${W-PR+7}" y="${PT+(i/4)*CH+4}" text-anchor="start"
+                fill="#c084fc" font-size="9" opacity="0.75"
+                font-family="'Segoe UI',sans-serif">${v.toFixed(1)}</text>`;
+        }
+    }
+
+    // X axis labels (up to 7 evenly spread)
+    sampleIndices(pts.length, 7).forEach(i => {
+        const x = xOf(pts[i].date);
+        out += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}" stroke="#0f0f1e" stroke-width="1"/>`;
+        out += `<text x="${x}" y="${H-PB+16}" text-anchor="middle"
+            fill="#484868" font-size="9" font-family="'Segoe UI',sans-serif">${fmtDateLabel(pts[i].date, chartRange)}</text>`;
+    });
+
+    // Weight line + dots
+    const wPts = pts.filter(p => p.w != null);
+    if (wPts.length >= 2) {
+        out += `<path d="${curvePath(wPts.map(p => ({ x: xOf(p.date), y: wScale.y(p.w) })))}"
+            fill="none" stroke="#4ade80" stroke-width="1.75" stroke-linecap="round"/>`;
+    }
+    wPts.forEach(p => {
+        out += `<circle cx="${xOf(p.date)}" cy="${wScale.y(p.w)}" r="3"
+            fill="#4ade80" stroke="#07070e" stroke-width="1.5"/>`;
+    });
+
+    // Waist line + dots
+    const cPts = pts.filter(p => p.c != null);
+    if (cPts.length >= 2) {
+        out += `<path d="${curvePath(cPts.map(p => ({ x: xOf(p.date), y: cScale.y(p.c) })))}"
+            fill="none" stroke="#c084fc" stroke-width="1.75" stroke-linecap="round"/>`;
+    }
+    cPts.forEach(p => {
+        out += `<circle cx="${xOf(p.date)}" cy="${cScale.y(p.c)}" r="3"
+            fill="#c084fc" stroke="#07070e" stroke-width="1.5"/>`;
+    });
+
+    svg.innerHTML = out;
+}
+
+// ── Calorie Intake Chart ───────────────────────────────────────────────────
+let calorieChartRange = 1;
+
+function setCalorieRange(months) {
+    calorieChartRange = months;
+    document.querySelectorAll('#calorieChartCard .range-btn').forEach(b =>
+        b.classList.toggle('active', +b.dataset.cl === months)
+    );
+    renderCalorieChart();
+}
+
+function renderCalorieChart() {
+    const svg = document.getElementById('calorieChart');
+    if (!svg) return;
+
+    const allMacro = Object.entries(data).filter(([k, e]) =>
+        k !== '_goals' && k !== '_cardio' &&
+        (e.fat != null || e.carbs != null || e.protein != null)
+    );
+    document.getElementById('calorieChartCard').style.display = allMacro.length ? 'block' : 'none';
+    if (!allMacro.length) return;
+
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - calorieChartRange);
+    const cutoffISO = cutoff.toISOString().split('T')[0];
+
+    const pts = allMacro
+        .filter(([k]) => k >= cutoffISO)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, e]) => ({
+            date,
+            kcal: Math.round((e.fat ?? 0) * 9 + (e.carbs ?? 0) * 4 + (e.protein ?? 0) * 4)
+        }))
+        .filter(p => p.kcal > 0);
+
+    if (pts.length === 0) {
+        svg.innerHTML = `<text x="340" y="100" text-anchor="middle" fill="#484868" font-size="11"
+            font-family="'Segoe UI',sans-serif">No calorie data in this range.</text>`;
+        return;
+    }
+
+    const W = 680, H = 200, PL = 56, PR = 20, PT = 14, PB = 34;
+    const CW = W - PL - PR, CH = H - PT - PB;
+
+    const goalKcal = goals ? Math.round(goals.fat * 9 + goals.carbs * 4 + goals.protein * 4) : null;
+    let yMin = Math.min(...pts.map(p => p.kcal));
+    let yMax = Math.max(...pts.map(p => p.kcal));
+    if (goalKcal) { yMin = Math.min(yMin, goalKcal); yMax = Math.max(yMax, goalKcal); }
+    if (yMin === yMax) { yMin -= 100; yMax += 100; }
+    const yPad = (yMax - yMin) * 0.15;
+    yMin -= yPad; yMax += yPad;
+    const yOf = v => PT + (1 - (v - yMin) / (yMax - yMin)) * CH;
+
+    const tMin  = new Date(pts[0].date).getTime();
+    const tMax  = new Date(pts[pts.length - 1].date).getTime();
+    const tSpan = tMax - tMin || 1;
+    const xOf   = d => PL + ((new Date(d).getTime() - tMin) / tSpan) * CW;
+
+    let out = `<defs>
+        <linearGradient id="kcalGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#8b3ff7"/>
+            <stop offset="100%" stop-color="#8b3ff7" stop-opacity="0"/>
+        </linearGradient>
+    </defs>`;
+
+    for (let i = 0; i <= 4; i++) {
+        const y = PT + (i / 4) * CH;
+        const v = Math.round(yMax - (i / 4) * (yMax - yMin));
+        out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#111128" stroke-width="1"/>`;
+        out += `<text x="${PL-7}" y="${y+4}" text-anchor="end" fill="#484868" font-size="9"
+            font-family="'Segoe UI',sans-serif">${v}</text>`;
+    }
+
+    sampleIndices(pts.length, 7).forEach(i => {
+        const x = xOf(pts[i].date);
+        out += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}" stroke="#0f0f1e" stroke-width="1"/>`;
+        out += `<text x="${x}" y="${H-PB+16}" text-anchor="middle" fill="#484868" font-size="9"
+            font-family="'Segoe UI',sans-serif">${fmtDateLabel(pts[i].date, calorieChartRange)}</text>`;
+    });
+
+    if (goalKcal) {
+        const gy = yOf(goalKcal);
+        out += `<line x1="${PL}" y1="${gy}" x2="${W-PR}" y2="${gy}"
+            stroke="#3b6fd8" stroke-width="1" stroke-dasharray="6,4" opacity="0.55"/>`;
+        out += `<text x="${PL+6}" y="${gy-4}" fill="#3b6fd8" font-size="8.5" opacity="0.7"
+            font-family="'Segoe UI',sans-serif">goal ${goalKcal}</text>`;
+    }
+
+    if (pts.length >= 2) {
+        const areaD = `M${xOf(pts[0].date)},${H-PB}` +
+            pts.map(p => ` L${xOf(p.date)},${yOf(p.kcal)}`).join('') +
+            ` L${xOf(pts[pts.length-1].date)},${H-PB} Z`;
+        out += `<path d="${areaD}" fill="url(#kcalGrad)" opacity="0.12"/>`;
+        out += `<path d="${curvePath(pts.map(p => ({ x: xOf(p.date), y: yOf(p.kcal) })))}"
+            fill="none" stroke="#8b3ff7" stroke-width="1.75" stroke-linecap="round"/>`;
+    }
+
+    pts.forEach(p => {
+        out += `<circle cx="${xOf(p.date)}" cy="${yOf(p.kcal)}" r="3"
+            fill="#8b3ff7" stroke="#07070e" stroke-width="1.5"/>`;
+    });
+
+    svg.innerHTML = out;
+}
+
+function curvePath(pts) {
+    if (pts.length === 0) return '';
+    let d = `M${pts[0].x},${pts[0].y}`;
+    for (let i = 1; i < pts.length; i++) {
+        const p0 = pts[i - 1], p1 = pts[i];
+        const cpx = (p0.x + p1.x) / 2;
+        d += ` C${cpx},${p0.y} ${cpx},${p1.y} ${p1.x},${p1.y}`;
+    }
+    return d;
+}
+
+function sampleIndices(total, max) {
+    if (total <= max) return Array.from({ length: total }, (_, i) => i);
+    return [...new Set(
+        Array.from({ length: max }, (_, i) => Math.round(i * (total - 1) / (max - 1)))
+    )];
+}
+
+function fmtDateLabel(iso, months) {
+    const d = new Date(iso + 'T00:00:00');
+    if (months <= 3)  return `${d.getMonth()+1}/${d.getDate()}`;
+    if (months <= 12) return d.toLocaleString('default', { month: 'short' }) + ' ' + d.getDate();
+    return d.toLocaleString('default', { month: 'short' }) + " '" + String(d.getFullYear()).slice(2);
+}
+
+// ── Cardio ────────────────────────────────────────────────────────────────
+const CARDIO_COLORS = {
+    run: '#f97316', walk: '#4ade80', bike: '#5b8fff', stairs: '#f0b429', other: '#9b5fff'
+};
+const CARDIO_TYPES = ['run', 'walk', 'bike', 'stairs', 'other'];
+let cardioType  = 'run';
+let cardioRange = 7;
+
+function selectCardioType(btn) {
+    document.querySelectorAll('.type-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cardioType = btn.dataset.type;
+}
+
+async function saveCardio() {
+    const date     = document.getElementById('cardioDate').value;
+    if (!date) { flash('Pick a date first.', 'err'); return; }
+    const duration = toNum(document.getElementById('cardioDuration').value);
+    const calories = toNum(document.getElementById('cardioCalories').value);
+    if (!data._cardio) data._cardio = [];
+    data._cardio.push({ id: Date.now(), date, type: cardioType, duration, calories });
+    try {
+        await write();
+        flash('Session logged!', 'ok');
+        document.getElementById('cardioDuration').value = '';
+        document.getElementById('cardioCalories').value = '';
+        renderCardioChart();
+    } catch (e) {
+        flash('Save failed: ' + e.message, 'err');
+    }
+}
+
+function setCardioRange(days) {
+    cardioRange = days;
+    document.querySelectorAll('#cardioChartCard .range-btn').forEach(b =>
+        b.classList.toggle('active', +b.dataset.cr === days)
+    );
+    renderCardioChart();
+}
+
+function renderCardioChart() {
+    const svg = document.getElementById('cardioChart');
+    if (!svg) return;
+
+    const sessions = data._cardio || [];
+    document.getElementById('cardioChartCard').style.display = sessions.length ? 'block' : 'none';
+    if (!sessions.length) return;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - cardioRange);
+    const cutoffISO = cutoff.toISOString().split('T')[0];
+
+    // Aggregate calories per date per type
+    const byDate = {};
+    sessions.filter(s => s.date >= cutoffISO).forEach(s => {
+        if (!byDate[s.date]) byDate[s.date] = {};
+        byDate[s.date][s.type] = (byDate[s.date][s.type] || 0) + (s.calories || 0);
+    });
+
+    // Fill every day in the range (gaps show as empty)
+    const allDates = [];
+    const d = new Date(cutoff);
+    const today = new Date();
+    while (d <= today) {
+        allDates.push(d.toISOString().split('T')[0]);
+        d.setDate(d.getDate() + 1);
+    }
+
+    const W = 680, H = 200, PL = 50, PR = 20, PT = 14, PB = 34;
+    const CW = W - PL - PR, CH = H - PT - PB;
+
+    const maxCal = Math.max(1, ...allDates.map(date => {
+        const day = byDate[date];
+        return day ? Object.values(day).reduce((a, b) => a + b, 0) : 0;
+    }));
+
+    const barW  = Math.max(4, Math.min(36, CW / allDates.length - 3));
+    const xOf   = i => PL + (i + 0.5) * (CW / allDates.length);
+
+    let out = '';
+
+    // Grid + Y labels
+    for (let i = 0; i <= 4; i++) {
+        const y = PT + (i / 4) * CH;
+        const v = Math.round(maxCal * (1 - i / 4));
+        out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#111128" stroke-width="1"/>`;
+        if (v > 0 || i === 0) out += `<text x="${PL-7}" y="${y+4}" text-anchor="end"
+            fill="#484868" font-size="9" font-family="'Segoe UI',sans-serif">${v}</text>`;
+    }
+
+    // X labels (sample evenly)
+    sampleIndices(allDates.length, cardioRange <= 14 ? allDates.length : 8).forEach(i => {
+        const label = fmtDateLabel(allDates[i], cardioRange <= 30 ? 1 : 3);
+        out += `<text x="${xOf(i)}" y="${H-PB+16}" text-anchor="middle"
+            fill="#484868" font-size="9" font-family="'Segoe UI',sans-serif">${label}</text>`;
+    });
+
+    // Stacked bars
+    allDates.forEach((date, i) => {
+        const day = byDate[date];
+        if (!day) return;
+        const x = xOf(i);
+        let stackY = H - PB;
+        CARDIO_TYPES.forEach(type => {
+            const cal = day[type] || 0;
+            if (!cal) return;
+            const bh = (cal / maxCal) * CH;
+            const isTop = stackY - bh <= (byDate[date] ? PT : PT);
+            out += `<rect x="${x - barW/2}" y="${stackY - bh}" width="${barW}" height="${bh}"
+                fill="${CARDIO_COLORS[type]}" rx="${isTop ? 3 : 0}" ry="${isTop ? 3 : 0}"/>`;
+            stackY -= bh;
+        });
+    });
+
+    svg.innerHTML = out;
+}
+
+function fillForm(date) {
+    document.getElementById('entryDate').value   = date;
+    document.getElementById('measureDate').value = date;
+    const e = data[date];
+    if (e) {
+        document.getElementById('fatInput').value     = e.fat     ?? '';
+        document.getElementById('carbsInput').value   = e.carbs   ?? '';
+        document.getElementById('proteinInput').value = e.protein ?? '';
+        document.getElementById('weightInput').value  = e.weight  ?? '';
+        document.getElementById('waistInput').value   = e.waist   ?? '';
+    }
+    refreshSummary();
+    document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+}
+
+let snackTimer;
+function flash(msg, type) {
+    const el = document.getElementById('snackbar');
+    document.getElementById('snackText').textContent = msg;
+    el.className = `snackbar ${type} show`;
+    clearTimeout(snackTimer);
+    snackTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function toNum(v) {
+    const n = parseFloat(v);
+    return isNaN(n) ? 0 : Math.round(n * 10) / 10;
+}
+
+// ── IndexedDB helpers ──────────────────────────────────────────────────────
+function idb() {
+    return new Promise((res, rej) => {
+        const r = indexedDB.open('gigatrack', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result);
+        r.onerror   = () => rej(r.error);
+    });
+}
+
+function dbGet(db, key) {
+    return new Promise((res, rej) => {
+        const r = db.transaction('kv', 'readonly').objectStore('kv').get(key);
+        r.onsuccess = () => res(r.result);
+        r.onerror   = () => rej(r.error);
+    });
+}
+
+async function storeHandle(handle) {
+    const db = await idb();
+    return new Promise((res, rej) => {
+        const r = db.transaction('kv', 'readwrite').objectStore('kv').put(handle, 'fh');
+        r.onsuccess = () => res();
+        r.onerror   = () => rej(r.error);
+    });
+}
+</script>
+</body>
+</html>
