@@ -391,6 +391,78 @@
         .type-pill[data-type="bike"].active,   .type-pill[data-type="bike"]:hover   { border-color:#5b8fff; color:#5b8fff; background:rgba(91,143,255,.09); }
         .type-pill[data-type="stairs"].active, .type-pill[data-type="stairs"]:hover { border-color:#f0b429; color:#f0b429; background:rgba(240,180,41,.09); }
         .type-pill[data-type="other"].active,  .type-pill[data-type="other"]:hover  { border-color:#9b5fff; color:#9b5fff; background:rgba(155,95,255,.09); }
+        .type-pill:not([data-type]).active, .type-pill:not([data-type]):hover { border-color:var(--blue); color:var(--blue); background:rgba(91,143,255,.09); }
+
+        /* ── Projection card ── */
+        .proj-stats {
+            display: flex;
+            flex-wrap: wrap;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        .proj-stat {
+            flex: 1;
+            min-width: 90px;
+            text-align: center;
+            padding: 0.6rem 0.5rem;
+            border-right: 1px solid var(--border);
+        }
+        .proj-stat:last-child { border-right: none; }
+        .proj-stat-lbl { font-size: 0.5rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem; }
+        .proj-stat-val { font-size: 1.05rem; font-weight: 200; }
+        .proj-stat-unit { font-size: 0.55rem; color: var(--muted); margin-top: 0.1rem; }
+        .proj-disclaimer { text-align:center; color:var(--muted); font-size:0.58rem; margin-top:0.5rem; letter-spacing:0.3px; }
+
+        /* ── Strength set logger ── */
+        .set-list { margin: 0.65rem 0 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; }
+        .set-row { display: flex; align-items: center; gap: 0.35rem; }
+        .set-num { font-size: 0.58rem; color: var(--muted); width: 14px; text-align: right; flex-shrink: 0; }
+        .set-input {
+            padding: 0.3rem 0.4rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.75rem;
+            font-family: inherit;
+        }
+        .set-input:focus { outline: none; border-color: rgba(91,143,255,0.5); }
+        .set-weight { width: 64px; }
+        .set-reps   { width: 50px; }
+        .set-x { color: var(--muted); font-size: 0.75rem; flex-shrink: 0; }
+        .set-remove { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; padding: 0 0.15rem; line-height: 1; flex-shrink: 0; }
+        .set-remove:hover { color: var(--red); }
+        .set-add {
+            width: 100%;
+            font-size: 0.6rem;
+            letter-spacing: 0.5px;
+            color: var(--blue);
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            padding: 0.28rem 0;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+            margin-top: 0.15rem;
+        }
+        .set-add:hover { border-color: var(--blue); }
+
+        /* ── Chart exercise select ── */
+        .chart-select {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+            max-width: 200px;
+        }
+        .chart-select option { background: #0c0c1a; }
 
         /* ── Goals card ── */
         .card-header {
@@ -591,8 +663,8 @@
         </div>
         </div><!-- end .top-row -->
 
-        <!-- Body Measurements + Cardio row -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem">
+        <!-- Body Measurements + Cardio + Strength row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;margin-bottom:1.25rem">
 
             <div class="card" style="margin-bottom:0">
                 <div class="card-label">Body Measurements</div>
@@ -640,6 +712,39 @@
                     </div>
                 </div>
                 <button class="btn btn-primary" onclick="saveCardio()">Log Session</button>
+            </div>
+
+            <div class="card" style="margin-bottom:0">
+                <div class="card-label">Strength Session</div>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="strengthDate">
+                </div>
+                <div class="field">
+                    <label>Exercise</label>
+                    <input type="text" id="strengthExercise" list="exerciseList" placeholder="e.g. Bench Press" autocomplete="off"
+                           style="width:100%;padding:0.45rem 0.6rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.82rem;font-family:inherit">
+                    <datalist id="exerciseList">
+                        <option>Bench Press</option><option>Incline Bench Press</option><option>Overhead Press</option>
+                        <option>Dumbbell Press</option><option>Dips</option><option>Push-up</option>
+                        <option>Pull-up</option><option>Chin-up</option><option>Barbell Row</option>
+                        <option>Cable Row</option><option>Lat Pulldown</option><option>Face Pull</option>
+                        <option>Squat</option><option>Deadlift</option><option>Romanian Deadlift</option>
+                        <option>Leg Press</option><option>Leg Curl</option><option>Hip Thrust</option>
+                        <option>Lunges</option><option>Calf Raise</option>
+                        <option>Bicep Curl</option><option>Hammer Curl</option>
+                        <option>Tricep Pushdown</option><option>Skull Crusher</option>
+                        <option>Lateral Raise</option><option>Face Pull</option>
+                    </datalist>
+                </div>
+                <label style="display:block;font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Sets</label>
+                <div class="set-list" id="setList"></div>
+                <button class="set-add" onclick="addSet()">+ Add Set</button>
+                <div class="field" style="margin-top:0.75rem">
+                    <label>Calories burned (optional)</label>
+                    <input type="number" id="strengthCalories" min="0" step="1" placeholder="0">
+                </div>
+                <button class="btn btn-primary" onclick="saveStrength()">Log Session</button>
             </div>
 
         </div>
@@ -747,6 +852,97 @@
             </div>
         </div>
 
+        <!-- Weight Projection -->
+        <div class="card" id="projCard" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+                <div class="card-label" style="margin-bottom:0">Weight Projection</div>
+                <button class="btn btn-ghost" onclick="toggleProfile()" style="font-size:0.62rem;padding:0.25rem 0.75rem">⚙ Profile</button>
+            </div>
+
+            <div class="collapsible" id="profileBody">
+                <div class="collapsible-inner" style="padding-top:0.75rem">
+                    <div style="margin-bottom:1rem">
+                        <label style="display:block;font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Sex</label>
+                        <div class="type-pills" style="margin-bottom:0">
+                            <button class="type-pill active" data-sex="male"   onclick="selectSex(this)">Male</button>
+                            <button class="type-pill"        data-sex="female" onclick="selectSex(this)">Female</button>
+                        </div>
+                    </div>
+                    <div class="macro-row">
+                        <div class="field">
+                            <label>Age</label>
+                            <input type="number" id="profileAge" min="10" max="100" step="1" placeholder="30">
+                        </div>
+                        <div class="field">
+                            <label>Height (cm)</label>
+                            <input type="number" id="profileHeight" min="100" max="250" step="1" placeholder="175">
+                        </div>
+                        <div class="field">
+                            <label>Target weight (kg)</label>
+                            <input type="number" id="profileTarget" min="30" max="300" step="0.1" placeholder="optional">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:1.2rem">
+                        <label style="display:block;font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Base Activity (excluding tracked exercise)</label>
+                        <div class="type-pills" style="flex-wrap:wrap;margin-bottom:0">
+                            <button class="type-pill"        data-act="1.2"   onclick="selectActivity(this)">Sedentary</button>
+                            <button class="type-pill"        data-act="1.375" onclick="selectActivity(this)">Light</button>
+                            <button class="type-pill active" data-act="1.55"  onclick="selectActivity(this)">Moderate</button>
+                            <button class="type-pill"        data-act="1.725" onclick="selectActivity(this)">Active</button>
+                            <button class="type-pill"        data-act="1.9"   onclick="selectActivity(this)">Very Active</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+                </div>
+            </div>
+
+            <div class="proj-stats" id="projStats" style="display:none">
+                <div class="proj-stat">
+                    <div class="proj-stat-lbl">BMR</div>
+                    <div class="proj-stat-val" id="psBMR">—</div>
+                    <div class="proj-stat-unit">kcal</div>
+                </div>
+                <div class="proj-stat">
+                    <div class="proj-stat-lbl">TDEE</div>
+                    <div class="proj-stat-val" id="psTDEE">—</div>
+                    <div class="proj-stat-unit">kcal</div>
+                </div>
+                <div class="proj-stat">
+                    <div class="proj-stat-lbl">Avg Intake</div>
+                    <div class="proj-stat-val" id="psIntake">—</div>
+                    <div class="proj-stat-unit">kcal/day</div>
+                </div>
+                <div class="proj-stat">
+                    <div class="proj-stat-lbl">Avg Cardio</div>
+                    <div class="proj-stat-val" id="psCardio">—</div>
+                    <div class="proj-stat-unit">kcal/day</div>
+                </div>
+                <div class="proj-stat">
+                    <div class="proj-stat-lbl">Daily Deficit</div>
+                    <div class="proj-stat-val" id="psBalance">—</div>
+                    <div class="proj-stat-unit">kcal</div>
+                </div>
+                <div class="proj-stat">
+                    <div class="proj-stat-lbl">Rate</div>
+                    <div class="proj-stat-val" id="psRate">—</div>
+                    <div class="proj-stat-unit">kg / week</div>
+                </div>
+            </div>
+
+            <svg id="projChart" viewBox="0 0 680 220" style="width:100%;height:auto;display:block;overflow:visible"></svg>
+
+            <div class="chart-legend" id="projLegend" style="display:none">
+                <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>Actual</div>
+                <div class="legend-item">
+                    <svg width="18" height="8" style="margin-right:0.4rem"><line x1="0" y1="4" x2="18" y2="4" stroke="#8b3ff7" stroke-width="2" stroke-dasharray="5,3"/></svg>Projected
+                </div>
+                <div class="legend-item" id="projTargetLegend" style="display:none">
+                    <svg width="18" height="8" style="margin-right:0.4rem"><line x1="0" y1="4" x2="18" y2="4" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="5,3"/></svg>Target
+                </div>
+            </div>
+            <div class="proj-disclaimer" id="projDisclaimer" style="display:none">Projection assumes current average intake &amp; activity remain constant. Estimates only.</div>
+        </div>
+
         <!-- Cardio chart -->
         <div class="card" id="cardioChartCard" style="display:none">
             <div class="chart-header">
@@ -766,6 +962,29 @@
                 <div class="legend-item"><div class="legend-dot" style="background:#5b8fff"></div>Bike</div>
                 <div class="legend-item"><div class="legend-dot" style="background:#f0b429"></div>Stairs</div>
                 <div class="legend-item"><div class="legend-dot" style="background:#9b5fff"></div>Other</div>
+            </div>
+        </div>
+
+        <!-- Strength Progress chart -->
+        <div class="card" id="strengthChartCard" style="display:none">
+            <div class="chart-header">
+                <div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:0">
+                    <div class="card-label" style="margin-bottom:0;flex-shrink:0">Strength Progress</div>
+                    <select id="strengthExerciseChart" class="chart-select" onchange="renderStrengthChart()">
+                        <option value="">— select —</option>
+                    </select>
+                </div>
+                <div class="range-btns" style="flex-shrink:0">
+                    <button class="range-btn active" data-sr="1"  onclick="setStrengthRange(1)">1M</button>
+                    <button class="range-btn"         data-sr="3"  onclick="setStrengthRange(3)">3M</button>
+                    <button class="range-btn"         data-sr="6"  onclick="setStrengthRange(6)">6M</button>
+                    <button class="range-btn"         data-sr="12" onclick="setStrengthRange(12)">1Y</button>
+                </div>
+            </div>
+            <svg id="strengthChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
+            <div class="chart-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Est. 1RM (kg)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div>Best weight (kg)</div>
             </div>
         </div>
 
@@ -793,10 +1012,12 @@ let goals = null;   // { fat, carbs, protein }
 
 // ── Init ───────────────────────────────────────────────────────────────────
 addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('entryDate').value   = isoToday();
+    document.getElementById('entryDate').value    = isoToday();
     document.getElementById('measureDate').value  = isoToday();
     document.getElementById('cardioDate').value   = isoToday();
+    document.getElementById('strengthDate').value = isoToday();
     document.getElementById('entryDate').addEventListener('change', refreshSummary);
+    renderSets();
     await tryRestore();
 });
 
@@ -891,11 +1112,14 @@ function boot() {
     s.className = 'hdr-sub ok';
     goals = data._goals || null;
     loadGoalsUI();
+    loadProfileUI();
     render();
     refreshSummary();
     renderCalorieChart();
     renderChart();
+    renderProjectionChart();
     renderCardioChart();
+    renderStrengthChart();
 }
 
 async function saveEntry() {
@@ -914,6 +1138,7 @@ async function saveEntry() {
         render();
         refreshSummary();
         renderCalorieChart();
+        renderProjectionChart();
     } catch (e) {
         flash('Save failed: ' + e.message, 'err');
     }
@@ -931,6 +1156,7 @@ async function saveMeasurements() {
         render();
         refreshSummary();
         renderChart();
+        renderProjectionChart();
     } catch (e) {
         flash('Save failed: ' + e.message, 'err');
     }
@@ -1080,7 +1306,7 @@ function render() {
     const container = document.getElementById('histContainer');
     const today     = isoToday();
     const entries   = Object.entries(data)
-        .filter(([k]) => k !== '_goals' && k !== '_cardio')
+        .filter(([k]) => k !== '_goals' && k !== '_cardio' && k !== '_profile' && k !== '_strength')
         .sort(([a], [b]) => b.localeCompare(a));  // newest first
 
     if (!entries.length) {
@@ -1279,7 +1505,7 @@ function renderCalorieChart() {
     if (!svg) return;
 
     const allMacro = Object.entries(data).filter(([k, e]) =>
-        k !== '_goals' && k !== '_cardio' &&
+        k !== '_goals' && k !== '_cardio' && k !== '_profile' && k !== '_strength' &&
         (e.fat != null || e.carbs != null || e.protein != null)
     );
     document.getElementById('calorieChartCard').style.display = allMacro.length ? 'block' : 'none';
@@ -1420,6 +1646,7 @@ async function saveCardio() {
         document.getElementById('cardioDuration').value = '';
         document.getElementById('cardioCalories').value = '';
         renderCardioChart();
+        renderProjectionChart();
     } catch (e) {
         flash('Save failed: ' + e.message, 'err');
     }
@@ -1505,6 +1732,450 @@ function renderCardioChart() {
                 fill="${CARDIO_COLORS[type]}" rx="${isTop ? 3 : 0}" ry="${isTop ? 3 : 0}"/>`;
             stackY -= bh;
         });
+    });
+
+    svg.innerHTML = out;
+}
+
+// ── Strength Training ─────────────────────────────────────────────────────
+let strengthSets = [{ weight: null, reps: null }];
+
+function renderSets() {
+    const list = document.getElementById('setList');
+    if (!list) return;
+    list.innerHTML = strengthSets.map((s, i) => `
+        <div class="set-row">
+            <span class="set-num">${i + 1}</span>
+            <input class="set-input set-weight" type="number" min="0" step="0.5" placeholder="kg"
+                value="${s.weight ?? ''}" oninput="strengthSets[${i}].weight = parseFloat(this.value)||null">
+            <span class="set-x">×</span>
+            <input class="set-input set-reps" type="number" min="1" step="1" placeholder="reps"
+                value="${s.reps ?? ''}" oninput="strengthSets[${i}].reps = parseInt(this.value)||null">
+            ${strengthSets.length > 1
+                ? `<button class="set-remove" onclick="removeSet(${i})" title="Remove">×</button>`
+                : '<span style="width:20px"></span>'}
+        </div>`).join('');
+}
+
+function addSet() {
+    const last = strengthSets[strengthSets.length - 1];
+    strengthSets.push({ weight: last?.weight ?? null, reps: last?.reps ?? null });
+    renderSets();
+}
+
+function removeSet(i) {
+    strengthSets.splice(i, 1);
+    renderSets();
+}
+
+async function saveStrength() {
+    const date     = document.getElementById('strengthDate').value;
+    const exercise = document.getElementById('strengthExercise').value.trim();
+    const calories = toNum(document.getElementById('strengthCalories').value);
+    if (!date)     { flash('Pick a date.', 'err'); return; }
+    if (!exercise) { flash('Enter an exercise name.', 'err'); return; }
+    const validSets = strengthSets.filter(s => s.weight != null && s.reps != null && s.reps > 0);
+    if (!validSets.length) { flash('Enter at least one complete set.', 'err'); return; }
+    if (!data._strength) data._strength = [];
+    data._strength.push({ id: Date.now(), date, exercise, sets: validSets, calories: calories || 0 });
+    try {
+        await write();
+        flash('Session logged!', 'ok');
+        document.getElementById('strengthExercise').value  = '';
+        document.getElementById('strengthCalories').value = '';
+        strengthSets = [{ weight: null, reps: null }];
+        renderSets();
+        renderStrengthChart();
+        renderProjectionChart();
+    } catch(e) { flash('Save failed: ' + e.message, 'err'); }
+}
+
+let strengthChartRange = 3;
+
+function setStrengthRange(months) {
+    strengthChartRange = months;
+    document.querySelectorAll('#strengthChartCard .range-btn').forEach(b =>
+        b.classList.toggle('active', +b.dataset.sr === months)
+    );
+    renderStrengthChart();
+}
+
+function renderStrengthChart() {
+    const card     = document.getElementById('strengthChartCard');
+    const sessions = data._strength || [];
+    card.style.display = sessions.length ? 'block' : 'none';
+    if (!sessions.length) return;
+
+    const sel       = document.getElementById('strengthExerciseChart');
+    const exercises = [...new Set(sessions.map(s => s.exercise))].sort();
+
+    // Rebuild dropdown if exercise list changed
+    const current = sel.value;
+    sel.innerHTML = exercises.map(e => `<option value="${e}">${e}</option>`).join('');
+    sel.value = exercises.includes(current) ? current : exercises[0];
+
+    const exercise = sel.value;
+    if (!exercise) return;
+
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - strengthChartRange);
+    const cutoffISO = cutoff.toISOString().split('T')[0];
+
+    // Best 1RM and best weight per date for selected exercise
+    const byDate = {};
+    sessions
+        .filter(s => s.exercise === exercise && s.date >= cutoffISO)
+        .forEach(s => {
+            s.sets.forEach(set => {
+                const oneRM = set.weight * (1 + set.reps / 30);
+                if (!byDate[s.date]) byDate[s.date] = { oneRM: 0, best: 0 };
+                if (oneRM > byDate[s.date].oneRM)      byDate[s.date].oneRM = oneRM;
+                if (set.weight > byDate[s.date].best)  byDate[s.date].best  = set.weight;
+            });
+        });
+
+    const pts = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b));
+    const svg = document.getElementById('strengthChart');
+
+    if (!pts.length) {
+        svg.innerHTML = `<text x="340" y="100" text-anchor="middle" fill="#484868" font-size="11"
+            font-family="'Segoe UI',sans-serif">No ${exercise} data in this range.</text>`;
+        return;
+    }
+
+    const W = 680, H = 200, PL = 52, PR = 20, PT = 14, PB = 34;
+    const CW = W - PL - PR, CH = H - PT - PB;
+
+    const allVals = pts.flatMap(([, v]) => [v.oneRM, v.best]);
+    let yMin = Math.min(...allVals), yMax = Math.max(...allVals);
+    if (yMin === yMax) { yMin -= 5; yMax += 5; }
+    const yPad = (yMax - yMin) * 0.18; yMin -= yPad; yMax += yPad;
+    const yOf = v => PT + (1 - (v - yMin) / (yMax - yMin)) * CH;
+
+    const tMin = new Date(pts[0][0]).getTime();
+    const tMax = new Date(pts[pts.length-1][0]).getTime();
+    const tSpan = tMax - tMin || 1;
+    const xOf = d => PL + ((new Date(d).getTime() - tMin) / tSpan) * CW;
+
+    let out = '';
+
+    // Grid + Y labels
+    for (let i = 0; i <= 4; i++) {
+        const y = PT + (i / 4) * CH;
+        const v = yMax - (i / 4) * (yMax - yMin);
+        out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#111128" stroke-width="1"/>`;
+        out += `<text x="${PL-7}" y="${y+4}" text-anchor="end" fill="#484868" font-size="9"
+            font-family="'Segoe UI',sans-serif">${v.toFixed(1)}</text>`;
+    }
+
+    // X labels
+    sampleIndices(pts.length, 7).forEach(i => {
+        const x = xOf(pts[i][0]);
+        out += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}" stroke="#0f0f1e" stroke-width="1"/>`;
+        out += `<text x="${x}" y="${H-PB+16}" text-anchor="middle" fill="#484868" font-size="9"
+            font-family="'Segoe UI',sans-serif">${fmtDateLabel(pts[i][0], strengthChartRange)}</text>`;
+    });
+
+    // Best weight (dashed, muted)
+    const bestCoords = pts.map(([d, v]) => ({ x: xOf(d), y: yOf(v.best) }));
+    if (bestCoords.length >= 2)
+        out += `<path d="${curvePath(bestCoords)}" fill="none" stroke="#484868"
+            stroke-width="1.25" stroke-dasharray="5,4" stroke-linecap="round" opacity="0.6"/>`;
+    bestCoords.forEach(p =>
+        out += `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="#484868" stroke="#07070e" stroke-width="1.5"/>`
+    );
+
+    // Estimated 1RM (solid, blue)
+    const oneRMCoords = pts.map(([d, v]) => ({ x: xOf(d), y: yOf(v.oneRM) }));
+    if (oneRMCoords.length >= 2)
+        out += `<path d="${curvePath(oneRMCoords)}" fill="none" stroke="var(--blue)"
+            stroke-width="1.75" stroke-linecap="round"/>`;
+    oneRMCoords.forEach(p =>
+        out += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="var(--blue)" stroke="#07070e" stroke-width="1.5"/>`
+    );
+
+    // PR marker on peak 1RM
+    const peakVal = Math.max(...pts.map(([, v]) => v.oneRM));
+    const peakIdx = pts.findIndex(([, v]) => v.oneRM === peakVal);
+    if (peakIdx >= 0) {
+        const px = oneRMCoords[peakIdx].x, py = oneRMCoords[peakIdx].y;
+        out += `<circle cx="${px}" cy="${py}" r="5.5" fill="none" stroke="var(--blue)" stroke-width="1" opacity="0.45"/>`;
+        out += `<text x="${px}" y="${py > PT + 20 ? py - 10 : py + 19}" text-anchor="middle"
+            fill="var(--blue)" font-size="8.5" font-weight="700"
+            font-family="'Segoe UI',sans-serif">PR ${peakVal.toFixed(1)}</text>`;
+    }
+
+    svg.innerHTML = out;
+}
+
+// ── Weight Projection ─────────────────────────────────────────────────────
+let profileSex      = 'male';
+let profileActivity = 1.55;
+
+function toggleProfile() {
+    document.getElementById('profileBody').classList.toggle('open');
+}
+
+function selectSex(btn) {
+    document.querySelectorAll('[data-sex]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    profileSex = btn.dataset.sex;
+}
+
+function selectActivity(btn) {
+    document.querySelectorAll('[data-act]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    profileActivity = parseFloat(btn.dataset.act);
+}
+
+function loadProfileUI() {
+    const p = data._profile;
+    if (!p) {
+        // Auto-open if no profile saved yet
+        document.getElementById('profileBody').classList.add('open');
+        return;
+    }
+    profileSex      = p.sex      || 'male';
+    profileActivity = p.activity || 1.55;
+    if (p.age)    document.getElementById('profileAge').value    = p.age;
+    if (p.height) document.getElementById('profileHeight').value = p.height;
+    if (p.target) document.getElementById('profileTarget').value = p.target;
+    document.querySelectorAll('[data-sex]').forEach(b =>
+        b.classList.toggle('active', b.dataset.sex === profileSex)
+    );
+    document.querySelectorAll('[data-act]').forEach(b =>
+        b.classList.toggle('active', parseFloat(b.dataset.act) === profileActivity)
+    );
+}
+
+async function saveProfile() {
+    const age    = toNum(document.getElementById('profileAge').value);
+    const height = toNum(document.getElementById('profileHeight').value);
+    const target = parseFloat(document.getElementById('profileTarget').value) || null;
+    if (!age || !height) { flash('Enter age and height.', 'err'); return; }
+    data._profile = { sex: profileSex, age, height, activity: profileActivity, target };
+    try {
+        await write();
+        flash('Profile saved!', 'ok');
+        document.getElementById('profileBody').classList.remove('open');
+        renderProjectionChart();
+    } catch(e) {
+        flash('Save failed: ' + e.message, 'err');
+    }
+}
+
+function calcBMR(weight, height, age, sex) {
+    return 10 * weight + 6.25 * height - 5 * age + (sex === 'male' ? 5 : -161);
+}
+
+function getAvgDiet() {
+    const entries = Object.entries(data).filter(([k, e]) =>
+        k !== '_goals' && k !== '_cardio' && k !== '_profile' && k !== '_strength' &&
+        (e.fat != null || e.carbs != null || e.protein != null)
+    );
+    if (!entries.length) return { avg: 0, count: 0 };
+    const total = entries.reduce((s, [, e]) =>
+        s + (e.fat ?? 0) * 9 + (e.carbs ?? 0) * 4 + (e.protein ?? 0) * 4, 0);
+    return { avg: total / entries.length, count: entries.length };
+}
+
+function getAvgCardio() {
+    const sessions = [
+        ...(data._cardio   || []),
+        ...(data._strength || []).filter(s => s.calories > 0),
+    ];
+    if (!sessions.length) return { avg: 0, count: 0 };
+    const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
+    const daySpan = Math.max(7,
+        Math.round((new Date() - new Date(sorted[0].date)) / 86400000) + 1
+    );
+    const total = sessions.reduce((s, c) => s + (c.calories || 0), 0);
+    return { avg: total / daySpan, count: sessions.length };
+}
+
+function renderProjectionChart() {
+    const card = document.getElementById('projCard');
+    card.style.display = 'block';
+
+    const svg       = document.getElementById('projChart');
+    const statsEl   = document.getElementById('projStats');
+    const legendEl  = document.getElementById('projLegend');
+    const disclEl   = document.getElementById('projDisclaimer');
+    const targetLeg = document.getElementById('projTargetLegend');
+
+    function showMsg(msg) {
+        statsEl.style.display = legendEl.style.display = disclEl.style.display = 'none';
+        svg.innerHTML = `<text x="340" y="110" text-anchor="middle" fill="#484868"
+            font-size="11" font-family="'Segoe UI',sans-serif">${msg}</text>`;
+    }
+
+    const profile = data._profile;
+    if (!profile || !profile.age || !profile.height) {
+        showMsg('Set up your profile above to see weight projection.');
+        return;
+    }
+
+    // Latest recorded weight
+    const weightEntries = Object.entries(data)
+        .filter(([k, e]) => k !== '_goals' && k !== '_cardio' && k !== '_profile' && k !== '_strength' && e.weight != null)
+        .sort(([a], [b]) => b.localeCompare(a));
+    const currentWeight = weightEntries.length ? weightEntries[0][1].weight : null;
+    if (!currentWeight) {
+        showMsg('Log a weight measurement to see projection.');
+        return;
+    }
+
+    const dietData   = getAvgDiet();
+    if (dietData.count === 0) {
+        showMsg('Log at least one food entry to see an accurate projection.');
+        return;
+    }
+
+    const cardioData = getAvgCardio();
+    const bmr        = calcBMR(currentWeight, profile.height, profile.age, profile.sex);
+    const tdee       = bmr * profile.activity;
+    const avgIntake  = dietData.avg;
+    const avgCardio  = cardioData.avg;
+
+    // Daily weight change: positive = gaining, negative = losing
+    // Body burns TDEE + cardio, consumes intake
+    const dailyWtChange = (avgIntake - tdee - avgCardio) / 7700;
+    const weeklyWtChange = dailyWtChange * 7;
+
+    // Stats
+    statsEl.style.display = 'flex';
+    document.getElementById('psBMR').textContent    = Math.round(bmr).toLocaleString();
+    document.getElementById('psTDEE').textContent   = Math.round(tdee).toLocaleString();
+    document.getElementById('psIntake').textContent = Math.round(avgIntake).toLocaleString();
+    document.getElementById('psCardio').textContent = Math.round(avgCardio) || '—';
+
+    const deficit = Math.round(tdee + avgCardio - avgIntake);
+    const balEl   = document.getElementById('psBalance');
+    balEl.textContent = (deficit >= 0 ? '+' : '') + deficit.toLocaleString();
+    balEl.style.color = deficit > 0 ? 'var(--green)' : 'var(--red)';
+
+    const rateEl = document.getElementById('psRate');
+    rateEl.textContent = (weeklyWtChange > 0 ? '+' : '') + weeklyWtChange.toFixed(2);
+    rateEl.style.color = weeklyWtChange < 0 ? 'var(--green)' : 'var(--red)';
+
+    legendEl.style.display  = 'flex';
+    disclEl.style.display   = 'block';
+    targetLeg.style.display = profile.target ? 'flex' : 'none';
+
+    // Chart geometry
+    const W = 680, H = 220, PL = 52, PR = 20, PT = 14, PB = 40;
+    const CW = W - PL - PR, CH = H - PT - PB;
+
+    const todayMs  = new Date().setHours(12, 0, 0, 0);
+    const pastMs   = 4  * 7 * 86400000;
+    const futureMs = 12 * 7 * 86400000;
+    const startMs  = todayMs - pastMs;
+    const endMs    = todayMs + futureMs;
+    const spanMs   = endMs - startMs;
+    const xOf      = ms => PL + ((ms - startMs) / spanMs) * CW;
+    const todayX   = xOf(todayMs);
+
+    // Past actual data (last 4 weeks)
+    const pastCutoff = new Date(startMs).toISOString().split('T')[0];
+    const actualPts  = weightEntries
+        .filter(([d]) => d >= pastCutoff)
+        .map(([d, e]) => ({ ms: new Date(d + 'T12:00:00').getTime(), w: e.weight }))
+        .sort((a, b) => a.ms - b.ms);
+
+    // Projected points: today → +12 weeks (weekly)
+    const projPts = Array.from({ length: 13 }, (_, i) => ({
+        ms: todayMs + i * 7 * 86400000,
+        w:  currentWeight + i * weeklyWtChange,
+    }));
+
+    // Y scale encompassing actual + projected + target
+    const allW = [...actualPts.map(p => p.w), ...projPts.map(p => p.w)];
+    if (profile.target) allW.push(profile.target);
+    let yMin = Math.min(...allW), yMax = Math.max(...allW);
+    if (yMin === yMax) { yMin -= 1; yMax += 1; }
+    const yPad = (yMax - yMin) * 0.2;
+    yMin -= yPad; yMax += yPad;
+    const yOf = v => PT + (1 - (v - yMin) / (yMax - yMin)) * CH;
+
+    let out = '';
+
+    // Grid + Y labels
+    for (let i = 0; i <= 4; i++) {
+        const y = PT + (i / 4) * CH;
+        const v = yMax - (i / 4) * (yMax - yMin);
+        out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#111128" stroke-width="1"/>`;
+        out += `<text x="${PL-7}" y="${y+4}" text-anchor="end" fill="#484868" font-size="9"
+            font-family="'Segoe UI',sans-serif">${v.toFixed(1)}</text>`;
+    }
+
+    // X labels and tick lines
+    const xTicks = [
+        { wk: -4, label: '−4W' }, { wk: -2, label: '−2W' },
+        { wk:  0, label: 'Today' },
+        { wk:  2, label: '+2W'  }, { wk:  4, label: '+4W'  },
+        { wk:  6, label: '+6W'  }, { wk:  8, label: '+8W'  },
+        { wk: 10, label: '+10W' }, { wk: 12, label: '+12W' },
+    ];
+    xTicks.forEach(({ wk, label }) => {
+        const x = xOf(todayMs + wk * 7 * 86400000);
+        if (x < PL - 2 || x > W - PR + 2) return;
+        const isToday = wk === 0;
+        out += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}"
+            stroke="${isToday ? '#1e1e40' : '#0f0f1e'}" stroke-width="${isToday ? 1.5 : 1}"/>`;
+        out += `<text x="${x}" y="${H-PB+16}" text-anchor="middle"
+            fill="${isToday ? 'var(--blue)' : '#484868'}" font-weight="${isToday ? 600 : 400}"
+            font-size="9" font-family="'Segoe UI',sans-serif">${label}</text>`;
+    });
+
+    // Target weight line
+    if (profile.target) {
+        const ty = yOf(profile.target);
+        out += `<line x1="${PL}" y1="${ty}" x2="${W-PR}" y2="${ty}"
+            stroke="var(--gold)" stroke-width="1" stroke-dasharray="5,4" opacity="0.5"/>`;
+        out += `<text x="${W-PR-4}" y="${ty-5}" text-anchor="end" fill="var(--gold)"
+            font-size="8.5" opacity="0.7" font-family="'Segoe UI',sans-serif">target ${profile.target} kg</text>`;
+    }
+
+    // Today divider (subtle vertical shading)
+    out += `<rect x="${todayX - 0.5}" y="${PT}" width="1" height="${CH}" fill="var(--blue)" opacity="0.25"/>`;
+
+    // Actual weight line + dots
+    if (actualPts.length >= 2) {
+        out += `<path d="${curvePath(actualPts.map(p => ({ x: xOf(p.ms), y: yOf(p.w) })))}"
+            fill="none" stroke="#4ade80" stroke-width="1.75" stroke-linecap="round"/>`;
+    }
+    actualPts.forEach(p => {
+        out += `<circle cx="${xOf(p.ms)}" cy="${yOf(p.w)}" r="3"
+            fill="#4ade80" stroke="#07070e" stroke-width="1.5"/>`;
+    });
+
+    // Connect last actual to first projected with a subtle dotted bridge
+    if (actualPts.length) {
+        const last = actualPts[actualPts.length - 1];
+        const first = projPts[0];
+        if (last.ms < first.ms) {
+            out += `<line x1="${xOf(last.ms)}" y1="${yOf(last.w)}"
+                x2="${xOf(first.ms)}" y2="${yOf(first.w)}"
+                stroke="#484868" stroke-width="1" stroke-dasharray="3,3"/>`;
+        }
+    }
+
+    // Projected dashed line
+    if (projPts.length >= 2) {
+        out += `<path d="${curvePath(projPts.map(p => ({ x: xOf(p.ms), y: yOf(p.w) })))}"
+            fill="none" stroke="#8b3ff7" stroke-width="1.75" stroke-linecap="round"
+            stroke-dasharray="8,5" opacity="0.85"/>`;
+    }
+
+    // Projected dots + labels at 0, 4, 8, 12 weeks
+    [0, 4, 8, 12].forEach(i => {
+        const p = projPts[i];
+        const x = xOf(p.ms), y = yOf(p.w);
+        out += `<circle cx="${x}" cy="${y}" r="3.5" fill="#8b3ff7" stroke="#07070e" stroke-width="1.5"/>`;
+        const above = y > PT + 20;
+        out += `<text x="${x}" y="${above ? y - 8 : y + 16}" text-anchor="middle"
+            fill="#8b3ff7" font-size="9" font-weight="600"
+            font-family="'Segoe UI',sans-serif">${p.w.toFixed(1)}</text>`;
     });
 
     svg.innerHTML = out;

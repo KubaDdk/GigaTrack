@@ -46,6 +46,32 @@
   },
   "2026-06-30": {
     "weight": 75.5,
-    "waist": 86
-  }
+    "waist": 86,
+    "fat": 60,
+    "carbs": 166,
+    "protein": 165
+  },
+  "_profile": {
+    "sex": "male",
+    "age": 42,
+    "height": 168,
+    "activity": 1.55,
+    "target": 70
+  },
+  "_cardio": [
+    {
+      "id": 1783006005089,
+      "date": "2026-06-30",
+      "type": "run",
+      "duration": 40,
+      "calories": 463
+    },
+    {
+      "id": 1783006037927,
+      "date": "2026-07-01",
+      "type": "walk",
+      "duration": 23,
+      "calories": 140
+    }
+  ]
 }
