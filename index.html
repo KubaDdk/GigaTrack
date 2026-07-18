@@ -1969,9 +1969,11 @@ function calcBMR(weight, height, age, sex) {
 }
 
 function getAvgDiet() {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+    const cutoffISO = cutoff.toISOString().split('T')[0];
     const entries = Object.entries(data).filter(([k, e]) =>
         k !== '_goals' && k !== '_cardio' && k !== '_profile' && k !== '_strength' &&
-        (e.fat != null || e.carbs != null || e.protein != null)
+        k >= cutoffISO && (e.fat != null || e.carbs != null || e.protein != null)
     );
     if (!entries.length) return { avg: 0, count: 0 };
     const total = entries.reduce((s, [, e]) =>
@@ -1980,17 +1982,14 @@ function getAvgDiet() {
 }
 
 function getAvgCardio() {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+    const cutoffISO = cutoff.toISOString().split('T')[0];
     const sessions = [
         ...(data._cardio   || []),
         ...(data._strength || []).filter(s => s.calories > 0),
-    ];
-    if (!sessions.length) return { avg: 0, count: 0 };
-    const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
-    const daySpan = Math.max(7,
-        Math.round((new Date() - new Date(sorted[0].date)) / 86400000) + 1
-    );
+    ].filter(s => s.date >= cutoffISO);
     const total = sessions.reduce((s, c) => s + (c.calories || 0), 0);
-    return { avg: total / daySpan, count: sessions.length };
+    return { avg: total / 7, count: sessions.length };
 }
 
 function renderProjectionChart() {
