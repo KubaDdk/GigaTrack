@@ -81,5 +81,33 @@
   "2026-07-11": {
     "weight": 80,
     "waist": 90
+  },
+  "2026-07-18": {
+    "habits": {
+      "water": {
+        "morning": true,
+        "noon": true,
+        "evening": true
+      },
+      "strength": true
+    }
+  },
+  "2026-07-17": {
+    "habits": {
+      "water": {
+        "morning": true,
+        "noon": true,
+        "evening": true
+      }
+    }
+  },
+  "2026-07-16": {
+    "habits": {
+      "water": {
+        "morning": true,
+        "noon": true,
+        "evening": true
+      }
+    }
   }
 }
