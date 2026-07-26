@@ -4,7 +4,21 @@
       "Bash(node -e ' *)",
       "Bash(python3 -c \"import playwright\")",
       "Bash(node -e \"require\\('playwright'\\)\")",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(npm ls *)",
+      "Bash(python3 -c \"import playwright; print\\('python playwright available'\\)\")",
+      "Bash(/usr/bin/chromium-browser --version)",
+      "Bash(node test.js)",
+      "Bash(curl -s \"http://localhost:8420/index.html\" -o /dev/null -w \"index.html: %{http_code}\\\\n\")",
+      "Bash(curl -s \"http://localhost:8420/favicon.ico\" -o /dev/null -w \"favicon.ico: %{http_code}\\\\n\")",
+      "Bash(curl -sI https://www.mailinator.com --max-time 8)",
+      "Bash(curl -s \"https://www.mailinator.com/api/v2/domains/public/inboxes/gigatrack-probe-test\" --max-time 8 -w \"\\\\nHTTP:%{http_code}\\\\n\")",
+      "Bash(node test2.js)",
+      "Bash(curl -s \"https://www.mailinator.com/api/v2/domains/public/messages/gigatrack-test-1785079536964-1785079539-01252143658012\" --max-time 8 -w \"\\\\nHTTP:%{http_code}\\\\n\")",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

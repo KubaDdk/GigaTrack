@@ -716,20 +716,27 @@
 
     <header class="hdr">
         <h1>GigaTrack</h1>
-        <div class="hdr-sub" id="fileStatus">no data file connected</div>
+        <div class="hdr-sub" id="fileStatus">not signed in</div>
+        <button class="btn btn-ghost" id="signOutBtn" onclick="signOut()" style="display:none;margin-top:0.75rem;padding:0.4rem 1rem;font-size:0.58rem">Sign Out</button>
     </header>
 
-    <!-- Setup card (shown until file connected) -->
+    <!-- Setup card (shown until signed in) -->
     <div class="card" id="setupCard">
-        <div class="card-label">Connect Data File</div>
+        <div class="card-label">Sign In</div>
         <p class="setup-desc">
-            Choose your <code>data.json</code> file or create a new one.
-            All data stays on your machine — nothing is uploaded.<br><br>
-            <span style="color:var(--blue);font-size:0.75rem">Requires Chrome or Edge (File System Access API).</span>
+            Sign in to sync your data across devices.
         </p>
+        <div class="field">
+            <label>Email</label>
+            <input type="email" id="authEmail" autocomplete="email">
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input type="password" id="authPassword" autocomplete="current-password">
+        </div>
         <div class="setup-btns" id="setupBtns">
-            <button class="btn btn-ghost" onclick="openExisting()">Open Existing</button>
-            <button class="btn btn-ghost" onclick="createNew()">Create New</button>
+            <button class="btn btn-ghost" onclick="signIn()">Sign In</button>
+            <button class="btn btn-ghost" onclick="signUp()">Create Account</button>
         </div>
     </div>
 
@@ -1291,10 +1298,15 @@
     <span id="snackText"></span>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
 
-let fh    = null;   // FileSystemFileHandle
+const SUPABASE_URL = 'https://lahduaymzcvbuwkfdzkx.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_E97aO_jWB_qGCYVKQoYf0w_9VsJlmJG';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let user  = null;   // Supabase auth user
 let data  = {};     // { "_goals": {...}, "YYYY-MM-DD": { fat, carbs, protein } }
 let goals = null;   // { fat, carbs, protein }
 
@@ -1314,7 +1326,7 @@ addEventListener('DOMContentLoaded', async () => {
     document.getElementById('strengthHabitDate').addEventListener('change', loadStrengthHabitForDate);
     document.getElementById('foodHabitDate').addEventListener('change', loadFoodHabitForDate);
     renderSets();
-    await tryRestore();
+    await tryRestoreSession();
 });
 
 function isoToday() {
@@ -1328,90 +1340,90 @@ function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
 }
 
-// ── File System Access ─────────────────────────────────────────────────────
-async function openExisting() {
-    try {
-        [fh] = await showOpenFilePicker({
-            types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
-            multiple: false,
-        });
-        await storeHandle(fh);
+// ── Auth ────────────────────────────────────────────────────────────────────
+async function signUp() {
+    const email    = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if (!email || !password) { flash('Enter email and password.', 'err'); return; }
+
+    const { data: res, error } = await sb.auth.signUp({ email, password });
+    if (error) { flash(error.message, 'err'); return; }
+
+    if (!res.session) {
+        flash('Check your email to confirm your account, then sign in.', 'ok');
+    } else {
+        user = res.user;
         await loadData();
         boot();
-    } catch (e) {
-        if (e.name !== 'AbortError') flash('Could not open file: ' + e.message, 'err');
     }
 }
 
-async function createNew() {
-    try {
-        fh = await showSaveFilePicker({
-            suggestedName: 'data.json',
-            types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
-        });
-        data = {};
-        await write();
-        await storeHandle(fh);
-        boot();
-    } catch (e) {
-        if (e.name !== 'AbortError') flash('Could not create file: ' + e.message, 'err');
-    }
+async function signIn() {
+    const email    = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if (!email || !password) { flash('Enter email and password.', 'err'); return; }
+
+    const { data: res, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { flash(error.message, 'err'); return; }
+
+    user = res.user;
+    await loadData();
+    boot();
 }
 
-async function tryRestore() {
-    try {
-        const db = await idb();
-        const handle = await dbGet(db, 'fh');
-        if (!handle) return;
-        fh = handle;
-        const perm = await fh.queryPermission({ mode: 'readwrite' });
-        if (perm === 'granted') {
-            await loadData();
-            boot();
-        } else {
-            injectReconnectBtn();
-        }
-    } catch { /* first run or storage error */ }
+async function signOut() {
+    await sb.auth.signOut();
+    user = null;
+    data = {};
+    document.getElementById('mainApp').style.display    = 'none';
+    document.getElementById('signOutBtn').style.display = 'none';
+    document.getElementById('setupCard').style.display   = 'block';
+    document.getElementById('authPassword').value = '';
+    const s = document.getElementById('fileStatus');
+    s.textContent = 'not signed in';
+    s.className = 'hdr-sub';
 }
 
-function injectReconnectBtn() {
-    const btns = document.getElementById('setupBtns');
-    const b = document.createElement('button');
-    b.className = 'btn btn-ghost';
-    b.style.order = '-1';
-    b.textContent = 'Reconnect';
-    b.onclick = async () => {
-        try {
-            const perm = await fh.requestPermission({ mode: 'readwrite' });
-            if (perm === 'granted') { await loadData(); boot(); }
-        } catch (e) { flash('Permission denied.', 'err'); }
-    };
-    btns.prepend(b);
-    document.querySelector('.setup-desc').textContent =
-        'Previous data.json found. Click Reconnect to continue, or open/create a different file.';
+async function tryRestoreSession() {
+    const { data: res } = await sb.auth.getSession();
+    if (!res.session) return;
+    user = res.session.user;
+    await loadData();
+    boot();
 }
 
 // ── Data I/O ───────────────────────────────────────────────────────────────
 async function loadData() {
-    try {
-        const file = await fh.getFile();
-        const text = await file.text();
-        data = text.trim() ? JSON.parse(text) : {};
-    } catch { data = {}; }
+    const { data: row, error } = await sb
+        .from('tracker_data')
+        .select('data')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (error) { flash('Could not load data: ' + error.message, 'err'); data = {}; return; }
+
+    if (!row) {
+        data = {};
+        await write();
+    } else {
+        data = row.data || {};
+    }
 }
 
 async function write() {
-    const w = await fh.createWritable();
-    await w.write(JSON.stringify(data, null, 2));
-    await w.close();
+    const { error } = await sb
+        .from('tracker_data')
+        .upsert({ user_id: user.id, data, updated_at: new Date().toISOString() });
+    if (error) flash('Could not save: ' + error.message, 'err');
 }
 
 // ── App ────────────────────────────────────────────────────────────────────
 function boot() {
     document.getElementById('setupCard').style.display = 'none';
     document.getElementById('mainApp').style.display   = 'block';
+    document.getElementById('signOutBtn').style.display = 'inline-block';
     const s = document.getElementById('fileStatus');
-    s.textContent = `connected · ${fh.name}`;
+    s.textContent = `signed in · ${user.email}`;
     s.className = 'hdr-sub ok';
     goals = data._goals || null;
     loadGoalsUI();
@@ -2972,33 +2984,6 @@ function flash(msg, type) {
 function toNum(v) {
     const n = parseFloat(v);
     return isNaN(n) ? 0 : Math.round(n * 10) / 10;
-}
-
-// ── IndexedDB helpers ──────────────────────────────────────────────────────
-function idb() {
-    return new Promise((res, rej) => {
-        const r = indexedDB.open('gigatrack', 1);
-        r.onupgradeneeded = () => r.result.createObjectStore('kv');
-        r.onsuccess = () => res(r.result);
-        r.onerror   = () => rej(r.error);
-    });
-}
-
-function dbGet(db, key) {
-    return new Promise((res, rej) => {
-        const r = db.transaction('kv', 'readonly').objectStore('kv').get(key);
-        r.onsuccess = () => res(r.result);
-        r.onerror   = () => rej(r.error);
-    });
-}
-
-async function storeHandle(handle) {
-    const db = await idb();
-    return new Promise((res, rej) => {
-        const r = db.transaction('kv', 'readwrite').objectStore('kv').put(handle, 'fh');
-        r.onsuccess = () => res();
-        r.onerror   = () => rej(r.error);
-    });
 }
 </script>
 </body>
