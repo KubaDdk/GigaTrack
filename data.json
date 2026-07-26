@@ -72,6 +72,13 @@
       "type": "walk",
       "duration": 23,
       "calories": 140
+    },
+    {
+      "id": 1784645982915,
+      "date": "2026-07-20",
+      "type": "run",
+      "duration": 27,
+      "calories": 312
     }
   ],
   "2026-07-06": {
@@ -90,7 +97,12 @@
         "evening": true
       },
       "strength": true
-    }
+    },
+    "weight": 78,
+    "waist": 88.5,
+    "fat": 57,
+    "carbs": 151,
+    "protein": 175
   },
   "2026-07-17": {
     "habits": {
@@ -99,7 +111,10 @@
         "noon": true,
         "evening": true
       }
-    }
+    },
+    "fat": 57,
+    "carbs": 151,
+    "protein": 175
   },
   "2026-07-16": {
     "habits": {
@@ -109,5 +124,10 @@
         "evening": true
       }
     }
+  },
+  "2026-07-20": {
+    "fat": 57,
+    "carbs": 151,
+    "protein": 175
   }
 }
