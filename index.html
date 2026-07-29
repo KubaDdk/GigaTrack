@@ -1649,6 +1649,13 @@ function isWaterComplete(date) {
     return !!(w && w.morning && w.noon && w.evening);
 }
 
+function waterProgress(date) {
+    const w = data[date] && data[date].habits && data[date].habits.water;
+    if (!w) return 0;
+    const glasses = [w.morning, w.noon, w.evening].filter(Boolean).length;
+    return glasses / 3;
+}
+
 function calcWaterStreak() {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -1757,11 +1764,11 @@ function calcNoSpendStreak() {
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const HABIT_ROWS = [
-    { icon: '💧', label: 'Water',    scheduled: () => true,              done: isWaterComplete },
-    { icon: '🏃', label: 'Cardio',   scheduled: isCardioScheduledDay,    done: isCardioHabitDone },
-    { icon: '💪', label: 'Strength', scheduled: isStrengthScheduledDay,  done: isStrengthHabitDone },
-    { icon: '🥗', label: 'Food',     scheduled: () => true,              done: isFoodHabitDone },
-    { icon: '💰', label: 'No Spend', scheduled: () => true,              done: isNoSpendHabitDone },
+    { icon: '💧', label: 'Water',    scheduled: () => true,              done: isWaterComplete,      progress: waterProgress },
+    { icon: '🏃', label: 'Cardio',   scheduled: isCardioScheduledDay,    done: isCardioHabitDone,    progress: d => isCardioHabitDone(d) ? 1 : 0 },
+    { icon: '💪', label: 'Strength', scheduled: isStrengthScheduledDay,  done: isStrengthHabitDone,  progress: d => isStrengthHabitDone(d) ? 1 : 0 },
+    { icon: '🥗', label: 'Food',     scheduled: () => true,              done: isFoodHabitDone,      progress: d => isFoodHabitDone(d) ? 1 : 0 },
+    { icon: '💰', label: 'No Spend', scheduled: () => true,              done: isNoSpendHabitDone,   progress: d => isNoSpendHabitDone(d) ? 1 : 0 },
 ];
 
 // ── Habits: check-in card ────────────────────────────────────────────────
@@ -1793,7 +1800,8 @@ function renderHabitPie() {
     const date      = document.getElementById('habitDate').value;
     const scheduled = HABIT_ROWS.filter(h => h.scheduled(date));
     const done      = scheduled.filter(h => h.done(date));
-    const pct       = scheduled.length ? Math.round(done.length / scheduled.length * 100) : 0;
+    const progress  = scheduled.reduce((sum, h) => sum + h.progress(date), 0);
+    const pct       = scheduled.length ? Math.round(progress / scheduled.length * 100) : 0;
 
     const r = 46, c = 2 * Math.PI * r;
     const offset = c * (1 - pct / 100);
