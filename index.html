@@ -1282,8 +1282,14 @@ addEventListener('DOMContentLoaded', async () => {
     await tryRestoreSession();
 });
 
+// Format a Date using its LOCAL calendar date, not toISOString()'s UTC conversion
+// (which shifts dates back a day for any positive UTC-offset timezone at/near local midnight).
+function toISODate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 function isoToday() {
-    return new Date().toISOString().split('T')[0];
+    return toISODate(new Date());
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
@@ -1661,7 +1667,7 @@ function calcWaterStreak() {
     // Grace period: an incomplete today doesn't break the streak yet, it just isn't counted.
     if (!isWaterComplete(isoToday())) d.setDate(d.getDate() - 1);
     let streak = 0;
-    while (isWaterComplete(d.toISOString().split('T')[0])) {
+    while (isWaterComplete(toISODate(d))) {
         streak++;
         d.setDate(d.getDate() - 1);
     }
@@ -1687,7 +1693,7 @@ function calcCardioStreak() {
     if (isCardioScheduledDay(todayISO) && !isCardioHabitDone(todayISO)) d.setDate(d.getDate() - 1);
     let streak = 0;
     for (let i = 0; i < 3650; i++) { // safety cap
-        const iso = d.toISOString().split('T')[0];
+        const iso = toISODate(d);
         if (isCardioScheduledDay(iso)) {
             if (isCardioHabitDone(iso)) streak++;
             else break;
@@ -1707,7 +1713,7 @@ function calcStrengthStreak() {
     d.setHours(0, 0, 0, 0);
     if (!isStrengthHabitDone(isoToday())) d.setDate(d.getDate() - 1);
     let streak = 0;
-    while (isStrengthHabitDone(d.toISOString().split('T')[0])) {
+    while (isStrengthHabitDone(toISODate(d))) {
         streak++;
         d.setDate(d.getDate() - 1);
     }
@@ -1724,7 +1730,7 @@ function calcFoodStreak() {
     d.setHours(0, 0, 0, 0);
     if (!isFoodHabitDone(isoToday())) d.setDate(d.getDate() - 1);
     let streak = 0;
-    while (isFoodHabitDone(d.toISOString().split('T')[0])) {
+    while (isFoodHabitDone(toISODate(d))) {
         streak++;
         d.setDate(d.getDate() - 1);
     }
@@ -1741,7 +1747,7 @@ function calcNoSpendStreak() {
     d.setHours(0, 0, 0, 0);
     if (!isNoSpendHabitDone(isoToday())) d.setDate(d.getDate() - 1);
     let streak = 0;
-    while (isNoSpendHabitDone(d.toISOString().split('T')[0])) {
+    while (isNoSpendHabitDone(toISODate(d))) {
         streak++;
         d.setDate(d.getDate() - 1);
     }
@@ -1938,7 +1944,7 @@ function getWeekDates(offsetWeeks) {
     return Array.from({ length: 7 }, (_, i) => {
         const dt = new Date(monday);
         dt.setDate(monday.getDate() + i);
-        return dt.toISOString().split('T')[0];
+        return toISODate(dt);
     });
 }
 
@@ -1997,7 +2003,7 @@ function renderChart() {
     // Filter to selected range
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - chartRange);
-    const cutoffISO = cutoff.toISOString().split('T')[0];
+    const cutoffISO = toISODate(cutoff);
 
     const pts = Object.entries(data)
         .filter(([k]) => k !== '_goals' && k >= cutoffISO)
@@ -2118,7 +2124,7 @@ function renderCalorieChart() {
 
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - calorieChartRange);
-    const cutoffISO = cutoff.toISOString().split('T')[0];
+    const cutoffISO = toISODate(cutoff);
 
     const pts = allMacro
         .filter(([k]) => k >= cutoffISO)
@@ -2283,7 +2289,7 @@ function renderCardioChart() {
 
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - cardioRange);
-    const cutoffISO = cutoff.toISOString().split('T')[0];
+    const cutoffISO = toISODate(cutoff);
 
     // Aggregate calories per date per type
     const byDate = {};
@@ -2297,7 +2303,7 @@ function renderCardioChart() {
     const d = new Date(cutoff);
     const today = new Date();
     while (d <= today) {
-        allDates.push(d.toISOString().split('T')[0]);
+        allDates.push(toISODate(d));
         d.setDate(d.getDate() + 1);
     }
 
@@ -2430,7 +2436,7 @@ function renderStrengthChart() {
 
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - strengthChartRange);
-    const cutoffISO = cutoff.toISOString().split('T')[0];
+    const cutoffISO = toISODate(cutoff);
 
     // Best 1RM and best weight per date for selected exercise
     const byDate = {};
@@ -2581,7 +2587,7 @@ function calcBMR(weight, height, age, sex) {
 
 function getAvgDiet() {
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
-    const cutoffISO = cutoff.toISOString().split('T')[0];
+    const cutoffISO = toISODate(cutoff);
     const entries = Object.entries(data).filter(([k, e]) =>
         k !== '_goals' && k !== '_cardio' && k !== '_profile' && k !== '_strength' &&
         k >= cutoffISO && (e.fat != null || e.carbs != null || e.protein != null)
@@ -2594,7 +2600,7 @@ function getAvgDiet() {
 
 function getAvgCardio() {
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
-    const cutoffISO = cutoff.toISOString().split('T')[0];
+    const cutoffISO = toISODate(cutoff);
     const sessions = [
         ...(data._cardio   || []),
         ...(data._strength || []).filter(s => s.calories > 0),
@@ -2686,7 +2692,7 @@ function renderProjectionChart() {
     const todayX   = xOf(todayMs);
 
     // Past actual data (last 4 weeks)
-    const pastCutoff = new Date(startMs).toISOString().split('T')[0];
+    const pastCutoff = toISODate(new Date(startMs));
     const actualPts  = weightEntries
         .filter(([d]) => d >= pastCutoff)
         .map(([d, e]) => ({ ms: new Date(d + 'T12:00:00').getTime(), w: e.weight }))
