@@ -1205,12 +1205,11 @@
                 </div>
                 <div class="empty" id="cardioNotScheduled" style="display:none;padding:0.5rem 0;text-align:left">Not scheduled this day.</div>
 
-                <div class="habit-group-label">💪 Strength <span class="habit-schedule-note">Wed · Fri · Sat · Sun</span></div>
-                <div class="habit-row" id="strengthHabitRow">
+                <div class="habit-group-label">💪 Strength</div>
+                <div class="habit-row">
                     <div class="habit-label"><span class="habit-icon">💪</span> Strength training session</div>
                     <input type="checkbox" class="habit-checkbox" id="strengthHabitCheck" onchange="toggleStrengthHabit()">
                 </div>
-                <div class="empty" id="strengthNotScheduled" style="display:none;padding:0.5rem 0;text-align:left">Not scheduled this day.</div>
 
                 <div class="habit-group-label">🥗 Food</div>
                 <div class="habit-row">
@@ -1691,13 +1690,7 @@ function calcCardioStreak() {
     return streak;
 }
 
-// Strength (Wed / Fri / Sat / Sun)
-const STRENGTH_HABIT_DAYS = [3, 5, 6, 0]; // Date.getDay(): Wed=3, Fri=5, Sat=6, Sun=0
-
-function isStrengthScheduledDay(date) {
-    return STRENGTH_HABIT_DAYS.includes(new Date(date + 'T00:00:00').getDay());
-}
-
+// Strength (every day)
 function isStrengthHabitDone(date) {
     return !!(data[date] && data[date].habits && data[date].habits.strength);
 }
@@ -1705,16 +1698,10 @@ function isStrengthHabitDone(date) {
 function calcStrengthStreak() {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    const todayISO = isoToday();
-    // Grace period: an incomplete but still-scheduled today doesn't break the streak yet.
-    if (isStrengthScheduledDay(todayISO) && !isStrengthHabitDone(todayISO)) d.setDate(d.getDate() - 1);
+    if (!isStrengthHabitDone(isoToday())) d.setDate(d.getDate() - 1);
     let streak = 0;
-    for (let i = 0; i < 3650; i++) { // safety cap
-        const iso = d.toISOString().split('T')[0];
-        if (isStrengthScheduledDay(iso)) {
-            if (isStrengthHabitDone(iso)) streak++;
-            else break;
-        }
+    while (isStrengthHabitDone(d.toISOString().split('T')[0])) {
+        streak++;
         d.setDate(d.getDate() - 1);
     }
     return streak;
@@ -1759,7 +1746,7 @@ const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HABIT_ROWS = [
     { icon: '💧', label: 'Water',    scheduled: () => true,              done: isWaterComplete },
     { icon: '🏃', label: 'Cardio',   scheduled: isCardioScheduledDay,    done: isCardioHabitDone },
-    { icon: '💪', label: 'Strength', scheduled: isStrengthScheduledDay,  done: isStrengthHabitDone },
+    { icon: '💪', label: 'Strength', scheduled: () => true,              done: isStrengthHabitDone },
     { icon: '🥗', label: 'Food',     scheduled: () => true,              done: isFoodHabitDone },
     { icon: '💰', label: 'No Spend', scheduled: () => true,              done: isNoSpendHabitDone },
 ];
@@ -1778,9 +1765,6 @@ function refreshHabitsUI() {
     document.getElementById('cardioNotScheduled').style.display = cardioScheduled ? 'none' : 'block';
     document.getElementById('cardioHabitCheck').checked = isCardioHabitDone(date);
 
-    const strengthScheduled = isStrengthScheduledDay(date);
-    document.getElementById('strengthHabitRow').style.display     = strengthScheduled ? 'flex' : 'none';
-    document.getElementById('strengthNotScheduled').style.display = strengthScheduled ? 'none' : 'block';
     document.getElementById('strengthHabitCheck').checked = isStrengthHabitDone(date);
 
     document.getElementById('foodHabitCheck').checked = isFoodHabitDone(date);
@@ -1859,7 +1843,7 @@ async function toggleCardioHabit() {
 
 async function toggleStrengthHabit() {
     const date = document.getElementById('habitDate').value;
-    if (!date || !isStrengthScheduledDay(date)) return;
+    if (!date) return;
     const done = document.getElementById('strengthHabitCheck').checked;
     data[date] = { ...(data[date] || {}), habits: { ...(data[date]?.habits || {}), strength: done } };
     await saveHabitsData();

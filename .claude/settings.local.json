@@ -18,7 +18,11 @@
       "Bash(curl -s \"https://www.mailinator.com/api/v2/domains/public/inboxes/gigatrack-probe-test\" --max-time 8 -w \"\\\\nHTTP:%{http_code}\\\\n\")",
       "Bash(node test2.js)",
       "Bash(curl -s \"https://www.mailinator.com/api/v2/domains/public/messages/gigatrack-test-1785079536964-1785079539-01252143658012\" --max-time 8 -w \"\\\\nHTTP:%{http_code}\\\\n\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(git fetch *)",
+      "Bash(git rev-list *)",
+      "Bash(git merge *)",
+      "Bash(git push *)"
     ]
   }
 }
