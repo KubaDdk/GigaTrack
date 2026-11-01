@@ -1702,6 +1702,7 @@ async function saveEntry() {
     const protein = toNum(document.getElementById('proteinInput').value);
 
     data[date] = { ...(data[date] || {}), fat, carbs, protein };
+    delete data[date].foodFromMeals;   // user typed it, so it's theirs now
 
     try {
         await write();
@@ -1994,14 +1995,14 @@ function hasDailyHabitData(date) {
     return countTrue(h.glasses) > 0 || countTrue(h.meals) > 0 || !!h.noSpend || h.spent != null;
 }
 
-async function saveHabitsData() {
+async function saveHabitsData(msg = 'Saved') {
     try {
         await write();
     } catch (e) {
         flash('Save failed: ' + e.message, 'err');
         return;
     }
-    flash('Saved', 'ok');
+    flash(msg, 'ok');
     renderHabitHistory();
     renderWeekOverview();
 }
@@ -2501,10 +2502,10 @@ function dailyHabits(date) {
     return (data[date] && data[date].habits) || {};
 }
 
-async function setDailyHabit(date, patch) {
+async function setDailyHabit(date, patch, msg) {
     data[date] = { ...(data[date] || {}), habits: { ...dailyHabits(date), ...patch } };
     renderDailyHabits();
-    await saveHabitsData();
+    await saveHabitsData(msg);
 }
 
 function toggleDaily(key, n, btn) {
@@ -2513,7 +2514,41 @@ function toggleDaily(key, n, btn) {
     const arr = Array.from({ length: n }, (_, i) => !!(dailyHabits(date)[key] || [])[i]);
     const i = +btn.dataset.i;
     arr[i] = !arr[i];
-    setDailyHabit(date, { [key]: arr });
+    const msg = key === 'meals' ? syncFoodFromMeals(date, arr) : undefined;
+    setDailyHabit(date, { [key]: arr }, msg);
+}
+
+// All 4 meals ticked → log the day's food as exactly the daily goals.
+// Never overwrites a food entry the user typed themselves; if a meal is
+// unticked again, the auto-filled entry is removed (unless it was edited).
+function syncFoodFromMeals(date, meals) {
+    const day     = data[date] || {};
+    const allDone = meals.every(Boolean);
+    const hasFood = day.fat != null || day.carbs != null || day.protein != null;
+    let msg;
+    const matchesGoals = goals && day.fat === goals.fat && day.carbs === goals.carbs && day.protein === goals.protein;
+
+    if (allDone && goals && !hasFood) {
+        data[date] = { ...day, fat: goals.fat, carbs: goals.carbs, protein: goals.protein, foodFromMeals: true };
+        msg = 'All meals done · food entry set to daily goals';
+    } else if (!allDone && day.foodFromMeals) {
+        const { foodFromMeals, ...rest } = day;
+        if (matchesGoals) { delete rest.fat; delete rest.carbs; delete rest.protein; }
+        data[date] = rest;
+    } else {
+        return;
+    }
+    if (document.getElementById('entryDate').value === date) {
+        const e = data[date];
+        document.getElementById('fatInput').value     = e.fat     ?? '';
+        document.getElementById('carbsInput').value   = e.carbs   ?? '';
+        document.getElementById('proteinInput').value = e.protein ?? '';
+    }
+    render();
+    refreshSummary();
+    renderCalorieChart();
+    renderProjectionChart();
+    return msg;
 }
 
 function toggleNoSpend() {
