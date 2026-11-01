@@ -344,12 +344,6 @@
             transition: all 0.15s;
         }
         .part-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(91,143,255,.09); }
-        .last-trained { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-        .lt-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.7rem; }
-        .lt-name { font-size: 0.58rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
-        .lt-when { font-size: 0.95rem; color: var(--text); margin-top: 0.2rem; }
-        .lt-when.never { color: var(--muted); }
-        .lt-date { font-size: 0.62rem; color: var(--muted); }
         .check-grid { display: grid; gap: 0.5rem; }
         .check-grid.five { grid-template-columns: repeat(5, 1fr); }
         .check-grid.two  { grid-template-columns: repeat(2, 1fr); }
@@ -879,7 +873,7 @@
             .card { padding: 1.25rem; border-radius: 12px; }
             .top-row { grid-template-columns: 1fr; gap: 1.25rem; }
             .meas-inputs { grid-template-columns: 1fr; gap: 0; }
-            .part-grid, .last-trained { grid-template-columns: repeat(2, 1fr); }
+            .part-grid { grid-template-columns: repeat(2, 1fr); }
             .step-btn { width: 3.4rem; font-size: 1rem; }
             .triple-row, .triple-row.dual { grid-template-columns: 1fr; gap: 1.25rem; }
             .tabs { gap: 0.4rem; }
@@ -1093,10 +1087,26 @@
             <button class="btn btn-primary" onclick="saveStrength()">Save</button>
         </div>
 
-        <!-- Last trained per body part -->
-        <div class="card">
-            <div class="card-label">Last Trained</div>
-            <div class="last-trained" id="lastTrained"></div>
+        <!-- Training frequency chart -->
+        <div class="card" id="trainChartCard">
+            <div class="chart-header">
+                <div class="card-label" style="margin-bottom:0">Training Frequency</div>
+                <div class="range-btns">
+                    <button class="range-btn active" data-tr="7"  onclick="setTrainRange(7)">7D</button>
+                    <button class="range-btn"        data-tr="30" onclick="setTrainRange(30)">30D</button>
+                    <button class="range-btn"        data-tr="91" onclick="setTrainRange(91)">3M</button>
+                </div>
+            </div>
+            <div class="proj-stats" style="margin:0.9rem 0 1rem">
+                <div class="proj-stat"><div class="proj-stat-lbl">Sessions</div><div class="proj-stat-val" id="trStatTotal">0</div></div>
+                <div class="proj-stat"><div class="proj-stat-lbl">Avg / week</div><div class="proj-stat-val" id="trStatAvg">0</div></div>
+                <div class="proj-stat"><div class="proj-stat-lbl">Days trained</div><div class="proj-stat-val" id="trStatDays">0</div></div>
+            </div>
+            <svg id="trainChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
+            <div class="chart-legend" id="trainAvgLegend" style="display:none">
+                <div class="legend-item"><div class="legend-dot" style="background:#9b5fff"></div>Sessions per week</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--gold);height:2px;border-radius:0"></div>Average per week</div>
+            </div>
         </div>
 
         </div><!-- end #trainingTab -->
@@ -1570,6 +1580,7 @@ function switchTab(tab) {
     TABS.forEach(t => {
         document.getElementById(t + 'Tab').style.display = t === tab ? 'block' : 'none';
     });
+    if (tab === 'training') renderTrainingChart();
     document.querySelectorAll('.tab-btn').forEach(b => {
         const on = b.dataset.tab === tab;
         b.classList.toggle('active', on);
@@ -1889,7 +1900,7 @@ function boot() {
     loadProfileUI();
     prefillMeasurements();
     prefillCardio();
-    renderLastTrained();
+    renderTrainingChart();
     renderDailyHabits();
     render();
     refreshSummary();
@@ -2690,25 +2701,106 @@ async function saveStrength() {
         flash('Session saved!', 'ok');
         selectedParts.clear();
         document.querySelectorAll('.part-btn').forEach(b => b.classList.remove('active'));
-        renderLastTrained();
+        renderTrainingChart();
     } catch(e) { flash('Save failed: ' + e.message, 'err'); }
 }
 
-function renderLastTrained() {
-    const el = document.getElementById('lastTrained');
-    if (!el) return;
-    const last = {};
-    (data._strength || []).forEach(s => (s.parts || []).forEach(p => {
-        if (!last[p] || s.date > last[p]) last[p] = s.date;
-    }));
-    const today = new Date(isoToday() + 'T00:00:00');
-    el.innerHTML = BODY_PARTS.map(p => {
-        const name = p[0].toUpperCase() + p.slice(1);
-        if (!last[p]) return `<div class="lt-item"><div class="lt-name">${name}</div><div class="lt-when never">—</div></div>`;
-        const days = Math.round((today - new Date(last[p] + 'T00:00:00')) / 86400000);
-        const when = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
-        return `<div class="lt-item"><div class="lt-name">${name}</div><div class="lt-when">${when}</div><div class="lt-date">${last[p]}</div></div>`;
-    }).join('');
+// ── Training frequency chart ──────────────────────────────────────────────
+let trainResizeT;
+addEventListener('resize', () => { clearTimeout(trainResizeT); trainResizeT = setTimeout(renderTrainingChart, 150); });
+// 7D / 30D: one bar per day. 3M: one bar per week (Mon–Sun).
+let trainRange = 7;
+
+function setTrainRange(days) {
+    trainRange = days;
+    document.querySelectorAll('#trainChartCard .range-btn').forEach(b =>
+        b.classList.toggle('active', +b.dataset.tr === days));
+    renderTrainingChart();
+}
+
+function renderTrainingChart() {
+    const svg = document.getElementById('trainChart');
+    if (!svg) return;
+
+    // Last N days, today included
+    const days = [];
+    for (let i = trainRange - 1; i >= 0; i--) {
+        const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
+        days.push(toISODate(d));
+    }
+    const first = days[0], last = days[days.length - 1];
+    const sessions = (data._strength || []).filter(s => s.date >= first && s.date <= last);
+    const perDay = {};
+    sessions.forEach(s => { (perDay[s.date] = perDay[s.date] || []).push(s); });
+
+    const total   = sessions.length;
+    const avgWeek = total / (trainRange / 7);
+    document.getElementById('trStatTotal').textContent = total;
+    document.getElementById('trStatAvg').textContent   = (Math.round(avgWeek * 10) / 10).toString();
+    document.getElementById('trStatDays').textContent  = `${Object.keys(perDay).length}/${trainRange}`;
+
+    // Buckets
+    const cap = p => p[0].toUpperCase() + p.slice(1);
+    let buckets;
+    if (trainRange <= 30) {
+        buckets = days.map(d => {
+            const list = perDay[d] || [];
+            const parts = [...new Set(list.flatMap(s => s.parts || []))].map(cap).join(', ');
+            return { label: fmtDateLabel(d, 1), n: list.length,
+                     tip: `${d}: ${list.length} session${list.length === 1 ? '' : 's'}${parts ? ' · ' + parts : ''}` };
+        });
+    } else {
+        buckets = [];
+        days.forEach(d => {
+            const wk = weekDatesFor(d)[0];
+            let b = buckets[buckets.length - 1];
+            if (!b || b.wk !== wk) { b = { wk, label: fmtDateLabel(wk, 1), n: 0 }; buckets.push(b); }
+            b.n += (perDay[d] || []).length;
+        });
+        buckets.forEach(b => b.tip = `Week of ${b.wk}: ${b.n} session${b.n === 1 ? '' : 's'}`);
+    }
+
+    // Match the drawing width to the real width so text stays readable on phones
+    const W = Math.round(Math.max(320, Math.min(680, svg.clientWidth || 680)));
+    const H = 200, PL = 30, PR = 12, PT = 18, PB = 34;
+    const CW = W - PL - PR, CH = H - PT - PB;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const maxN  = Math.max(trainRange <= 30 ? 2 : 4, ...buckets.map(b => b.n));
+    const slot  = CW / buckets.length;
+    const barW  = Math.max(4, Math.min(40, slot - 4));
+    const xOf   = i => PL + (i + 0.5) * slot;
+    const yOf   = v => PT + (1 - v / maxN) * CH;
+    const font  = `font-family="'Segoe UI',sans-serif"`;
+
+    let out = '';
+    // Grid + integer Y labels
+    const step = Math.max(1, Math.ceil(maxN / 4));
+    for (let v = 0; v <= maxN; v += step) {
+        const y = yOf(v);
+        out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+        out += `<text x="${PL-7}" y="${y+4}" text-anchor="end" fill="var(--muted)" font-size="9" ${font}>${v}</text>`;
+    }
+    // X labels
+    const maxLabels = Math.max(4, Math.floor(CW / 48));
+    sampleIndices(buckets.length, Math.min(buckets.length, maxLabels)).forEach(i => {
+        out += `<text x="${xOf(i)}" y="${H-PB+16}" text-anchor="middle" fill="var(--muted)" font-size="9" ${font}>${buckets[i].label}</text>`;
+    });
+    // Bars
+    buckets.forEach((b, i) => {
+        if (!b.n) return;
+        const y = yOf(b.n);
+        out += `<rect x="${xOf(i) - barW/2}" y="${y}" width="${barW}" height="${H - PB - y}" fill="#9b5fff" rx="3" ry="3"><title>${b.tip}</title></rect>`;
+        if (slot >= 16) out += `<text x="${xOf(i)}" y="${y - 5}" text-anchor="middle" fill="var(--text)" font-size="9" ${font}>${b.n}</text>`;
+    });
+    // Average-per-week line in weekly view
+    if (trainRange > 30 && avgWeek > 0) {
+        const y = yOf(avgWeek);
+        out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--gold)" stroke-width="1.2" stroke-dasharray="5 4"><title>Average ${Math.round(avgWeek * 10) / 10} sessions/week</title></line>`;
+    }
+    document.getElementById('trainAvgLegend').style.display = trainRange > 30 ? 'flex' : 'none';
+    if (!total) out += `<text x="${PL + CW/2}" y="${PT + CH/2}" text-anchor="middle" fill="var(--muted)" font-size="11" ${font}>No training in this range yet.</text>`;
+
+    svg.innerHTML = out;
 }
 
 // ── Weight Projection ─────────────────────────────────────────────────────
