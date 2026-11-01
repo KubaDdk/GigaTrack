@@ -839,6 +839,32 @@
         .tab-btn.complete.active { background: var(--active-bg); box-shadow: 0 0 0 1px var(--green) inset; }
 
         /* ── Weekly Overview ── */
+        /* ── Week tab ── */
+        .wk-rings-wrap { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+        .wk-rings { width: 220px; height: 220px; flex: 0 0 auto; }
+        .wk-rings .ring-track { stroke: var(--border); }
+        .wk-rings .ring-val { transition: stroke-dasharray 0.5s ease; }
+        .wk-center-pct { font-size: 22px; font-weight: 200; fill: var(--text); }
+        .wk-center-lbl { font-size: 6.5px; letter-spacing: 1.5px; fill: var(--muted); text-transform: uppercase; }
+        .wk-legend { display: grid; gap: 0.6rem; min-width: 210px; }
+        .wk-leg { display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 0.6rem; font-size: 0.8rem; }
+        .wk-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .wk-leg-name { color: var(--text); }
+        .wk-leg-val { color: var(--muted); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+        .wk-leg-val b { color: var(--text); font-weight: 600; }
+        .wk-day { padding: 0.8rem 0; border-bottom: 1px solid var(--row-line); cursor: pointer; }
+        .wk-day:last-child { border-bottom: none; }
+        .wk-day-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem; }
+        .wk-day-name { font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+        .wk-day.today .wk-day-name { color: var(--blue); }
+        .wk-day.selected { background: var(--row-line); border-radius: 8px; padding-left: 0.6rem; padding-right: 0.6rem; }
+        .wk-day-date { font-size: 0.68rem; color: var(--muted); }
+        .wk-items { list-style: none; display: grid; gap: 0.3rem; }
+        .wk-item { font-size: 0.85rem; color: var(--text); display: flex; gap: 0.5rem; }
+        .wk-item .wk-ic { width: 1.3rem; flex: 0 0 auto; text-align: center; }
+        .wk-item .wk-sub { color: var(--muted); }
+        .wk-empty { font-size: 0.8rem; color: var(--muted); }
+
         .week-table { width: 100%; border-collapse: collapse; }
         .week-table th, .week-table td { text-align: center; padding: 0.55rem 0.3rem; }
         .week-table th {
@@ -965,6 +991,7 @@
             <button class="tab-btn" data-tab="training" onclick="switchTab('training')">Training</button>
             <button class="tab-btn" data-tab="habits" onclick="switchTab('habits')">Habits</button>
             <button class="tab-btn" data-tab="other" onclick="switchTab('other')">Other</button>
+            <button class="tab-btn" data-tab="week" onclick="switchTab('week')">Week</button>
         </div>
 
         <!-- Measurement tab -->
@@ -1144,6 +1171,31 @@
         </div>
 
         </div><!-- end #habitsTab -->
+
+        <!-- Week tab: everything logged in the week of the selected date -->
+        <div id="weekTab" style="display:none">
+
+        <div class="card">
+            <div class="chart-header">
+                <div class="card-label" style="margin-bottom:0">Week</div>
+                <div class="range-btns">
+                    <button class="range-btn" onclick="shiftWeek(-1)" aria-label="Previous week">‹ Prev</button>
+                    <button class="range-btn" onclick="shiftWeek(1)" aria-label="Next week">Next ›</button>
+                </div>
+            </div>
+            <div class="goals-summary" id="wkRange" style="text-align:center;margin:0.6rem 0 0.4rem"></div>
+            <div class="wk-rings-wrap">
+                <svg class="wk-rings" id="wkRings" viewBox="0 0 220 220" role="img" aria-label="Weekly progress rings"></svg>
+                <div class="wk-legend" id="wkLegend"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Logged this week</div>
+            <div class="wk-list" id="wkList"></div>
+        </div>
+
+        </div><!-- end #weekTab -->
 
         <!-- Other tab (temporary home for everything else) -->
         <div id="otherTab" style="display:none">
@@ -1539,7 +1591,7 @@ function setTheme(theme) {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-const TABS = ['measurement', 'cardio', 'training', 'habits', 'other'];
+const TABS = ['measurement', 'cardio', 'training', 'habits', 'other', 'week'];
 let currentTab = 'measurement';
 
 function switchTab(tab) {
@@ -1695,6 +1747,120 @@ function updateTabBadges() {
         b.classList.toggle('complete', done);
         b.title = done ? 'Done for this day (tap to edit)' : '';
     });
+    renderWeek();
+}
+
+// ── Week tab ──────────────────────────────────────────────────────────────
+// Rings, outer → inner. Each is a 0..1 score for the week of the selected date.
+const WEEK_RINGS = [
+    { key: 'measurement', label: 'Measurements', color: '#4ade80' },
+    { key: 'cardio',      label: 'Cardio',       color: '#f97316' },
+    { key: 'training',    label: 'Training',     color: '#9b5fff' },
+    { key: 'habits',      label: 'Habits',       color: '#5b8fff' },
+    { key: 'other',       label: 'Food',         color: '#f0b429' },
+];
+
+// Habits get partial credit per day (water, meals, money each a third).
+function habitDayScore(d) {
+    const h = dailyHabits(d);
+    const money = h.noSpend || h.spent != null ? 1 : 0;
+    return (Math.min(countTrue(h.glasses), 5) / 5 + Math.min(countTrue(h.meals), 4) / 4 + money) / 3;
+}
+
+function weekDatesFor(date) {
+    const [y, m, d] = date.split('-').map(Number);
+    const base = new Date(y, m - 1, d);
+    const day = base.getDay();
+    base.setDate(base.getDate() + (day === 0 ? -6 : 1 - day));
+    return Array.from({ length: 7 }, (_, i) => {
+        const dt = new Date(base); dt.setDate(base.getDate() + i);
+        return toISODate(dt);
+    });
+}
+
+function shiftWeek(delta) {
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    setSelectedDate(toISODate(new Date(y, m - 1, d + delta * 7)));
+}
+
+function renderWeek() {
+    const svg = document.getElementById('wkRings');
+    if (!svg || !selectedDate || !user) return;
+    const dates = weekDatesFor(selectedDate);
+    const today = isoToday();
+
+    const [a, b] = [dates[0], dates[6]].map(d => new Date(d + 'T00:00:00')
+        .toLocaleDateString(undefined, { day: 'numeric', month: 'short' }));
+    document.getElementById('wkRange').textContent =
+        `${a} – ${b}` + (dates.includes(today) ? ' · This week' : '');
+
+    // Scores
+    const scores = WEEK_RINGS.map(r => {
+        if (r.key === 'habits') {
+            const sum = dates.reduce((t, d) => t + habitDayScore(d), 0);
+            return { ...r, pct: sum / 7, text: `<b>${Math.round(sum / 7 * 100)}%</b>` };
+        }
+        const n = dates.filter(d => TAB_COMPLETE[r.key](d)).length;
+        return { ...r, pct: n / 7, text: `<b>${n}</b>/7 days` };
+    });
+
+    // Rings
+    const C = 110, W = 13, GAP = 4;
+    let out = '';
+    scores.forEach((r, i) => {
+        const rad = 100 - i * (W + GAP);
+        const len = 2 * Math.PI * rad;
+        const val = Math.max(0, Math.min(1, r.pct)) * len;
+        out += `<circle class="ring-track" cx="${C}" cy="${C}" r="${rad}" fill="none" stroke-width="${W}" opacity="0.6"/>`;
+        if (val > 0) out += `<circle class="ring-val" cx="${C}" cy="${C}" r="${rad}" fill="none" stroke="${r.color}"
+            stroke-width="${W}" stroke-linecap="round" stroke-dasharray="${val} ${len}"
+            transform="rotate(-90 ${C} ${C})"><title>${r.label}: ${Math.round(r.pct * 100)}%</title></circle>`;
+    });
+    const overall = Math.round(scores.reduce((t, r) => t + r.pct, 0) / scores.length * 100);
+    out += `<text class="wk-center-pct" x="${C}" y="${C + 4}" text-anchor="middle">${overall}%</text>`;
+    out += `<text class="wk-center-lbl" x="${C}" y="${C + 16}" text-anchor="middle">this week</text>`;
+    svg.innerHTML = out;
+
+    document.getElementById('wkLegend').innerHTML = scores.map(r =>
+        `<div class="wk-leg"><span class="wk-dot" style="background:${r.color}"></span>
+            <span class="wk-leg-name">${r.label}</span><span class="wk-leg-val">${r.text}</span></div>`).join('');
+
+    // Day-by-day list
+    const cap = s => s[0].toUpperCase() + s.slice(1);
+    const fmt = n => (Math.round(n * 10) / 10).toString();
+    document.getElementById('wkList').innerHTML = dates.map(d => {
+        const e = data[d] || {};
+        const items = [];
+        const item = (ic, main, sub) => items.push(
+            `<li class="wk-item"><span class="wk-ic">${ic}</span><span>${main}${sub ? ` <span class="wk-sub">· ${sub}</span>` : ''}</span></li>`);
+
+        if (e.weight != null || e.waist != null)
+            item('⚖️', [e.weight != null ? `${fmt(e.weight)} kg` : '', e.waist != null ? `${fmt(e.waist)} cm waist` : ''].filter(Boolean).join(' · '));
+        (data._cardio || []).filter(c => c.date === d).forEach(c =>
+            item('🏃', `${cap(c.type || 'cardio')} ${c.duration ? c.duration + ' min' : ''}`.trim(), c.calories ? `${c.calories} kcal` : ''));
+        (data._strength || []).filter(t => t.date === d).forEach(t =>
+            item('🏋️', (t.parts || []).map(cap).join(', ') || 'Strength session'));
+        const h = dailyHabits(d);
+        const hp = [];
+        if (countTrue(h.glasses)) hp.push(`💧 ${countTrue(h.glasses)}/5`);
+        if (countTrue(h.meals))   hp.push(`🍽️ ${countTrue(h.meals)}/4`);
+        if (h.noSpend)            hp.push('💰 no spend');
+        else if (h.spent != null) hp.push(`💰 ${fmtEur(h.spent)}`);
+        if (hp.length) item('✅', hp.join('&nbsp;&nbsp;'));
+        if (e.fat != null || e.carbs != null || e.protein != null) {
+            const kcal = Math.round((e.fat || 0) * 9 + (e.carbs || 0) * 4 + (e.protein || 0) * 4);
+            item('🍎', `${kcal.toLocaleString()} kcal`, `${fmt(e.fat || 0)}g fat · ${fmt(e.carbs || 0)}g carbs · ${fmt(e.protein || 0)}g protein`);
+        }
+
+        const dt = new Date(d + 'T00:00:00');
+        const name = d === today ? 'Today' : dt.toLocaleDateString(undefined, { weekday: 'long' });
+        const body = items.length ? `<ul class="wk-items">${items.join('')}</ul>`
+            : `<div class="wk-empty">${d > today ? '—' : 'Nothing logged'}</div>`;
+        const cls = ['wk-day', d === today ? 'today' : '', d === selectedDate ? 'selected' : ''].join(' ');
+        return `<div class="${cls}" onclick="setSelectedDate('${d}')" title="Set date to this day">
+            <div class="wk-day-head"><span class="wk-day-name">${name}</span>
+            <span class="wk-day-date">${dt.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span></div>${body}</div>`;
+    }).join('');
 }
 
 // ── App ────────────────────────────────────────────────────────────────────
