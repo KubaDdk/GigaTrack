@@ -108,6 +108,42 @@
         }
 
         .hdr { position: relative; }
+
+        /* Date button: mirrors the menu button, on the left of the title */
+        .date-btn-wrap {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .date-btn {
+            height: 42px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--blue);
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 0 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .date-btn:hover { border-color: var(--blue); }
+        .date-btn.past { color: var(--gold); border-color: var(--gold); }
+        /* Native picker sits under the button so it anchors there; invisible */
+        #globalDate {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            border: 0;
+        }
         .menu-btn {
             position: absolute;
             right: 0;
@@ -841,6 +877,7 @@
             body { padding: 1.5rem 0.75rem 3rem; }
             .hdr { margin-bottom: 1.75rem; }
             .hdr h1 { font-size: 1.5rem; letter-spacing: 5px; }
+            .date-btn { font-size: 0.55rem; letter-spacing: 1px; padding: 0 0.6rem; }
             .card { padding: 1.25rem; border-radius: 12px; }
             .top-row { grid-template-columns: 1fr; gap: 1.25rem; }
             .meas-inputs { grid-template-columns: 1fr; gap: 0; }
@@ -871,6 +908,10 @@
 <div class="wrap">
 
     <header class="hdr">
+        <div class="date-btn-wrap" id="dateBtnWrap" style="display:none">
+            <button type="button" class="date-btn" id="dateBtn" onclick="openDatePicker()" title="Change date">Today</button>
+            <input type="date" id="globalDate" tabindex="-1" aria-label="Date">
+        </div>
         <h1>GigaTrack</h1>
         <button class="menu-btn" id="menuBtn" onclick="toggleMenu(event)" aria-label="Menu" aria-expanded="false">
             <span></span><span></span><span></span>
@@ -928,10 +969,7 @@
         <!-- Body Measurements -->
         <div class="card">
             <div class="card-label">Body Measurements</div>
-            <div class="field">
-                <label>Date</label>
-                <input type="date" id="measureDate">
-            </div>
+            <input type="hidden" id="measureDate">
             <div class="meas-inputs">
                 <div class="field">
                     <label>Weight (kg)</label>
@@ -981,10 +1019,7 @@
         <!-- Cardio Session -->
         <div class="card">
             <div class="card-label">Cardio Session</div>
-            <div class="field">
-                <label>Date</label>
-                <input type="date" id="cardioDate">
-            </div>
+            <input type="hidden" id="cardioDate">
             <div style="margin-bottom:0.3rem">
                 <label style="display:block;font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Type</label>
                 <div class="type-pills">
@@ -1045,10 +1080,7 @@
         <!-- Strength Session -->
         <div class="card">
             <div class="card-label">Strength Session</div>
-            <div class="field">
-                <label>Date</label>
-                <input type="date" id="strengthDate">
-            </div>
+            <input type="hidden" id="strengthDate">
             <label style="display:block;font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Body part <span style="text-transform:none;letter-spacing:0">(pick one or more)</span></label>
             <div class="part-grid">
                 <button type="button" class="part-btn" data-part="chest"     onclick="toggleBodyPart(this)">Chest</button>
@@ -1072,12 +1104,7 @@
         <!-- Habits tab -->
         <div id="habitsTab" style="display:none">
 
-        <div class="card">
-            <div class="field" style="margin-bottom:0">
-                <label>Date</label>
-                <input type="date" id="dailyDate">
-            </div>
-        </div>
+        <input type="hidden" id="dailyDate">
 
         <!-- Water -->
         <div class="card">
@@ -1121,10 +1148,7 @@
         <!-- Food Entry -->
         <div class="card">
             <div class="card-label">Food Entry</div>
-            <div class="field">
-                <label>Date</label>
-                <input type="date" id="entryDate">
-            </div>
+            <input type="hidden" id="entryDate">
             <div class="macro-row">
                 <div class="field">
                     <label>Fat (g)</label>
@@ -1420,14 +1444,14 @@ let goals = null;   // { fat, carbs, protein }
 // ── Init ───────────────────────────────────────────────────────────────────
 addEventListener('DOMContentLoaded', async () => {
     applyTheme(document.documentElement.dataset.theme || 'dark');
-    document.getElementById('entryDate').value    = isoToday();
-    document.getElementById('measureDate').value  = isoToday();
-    document.getElementById('cardioDate').value   = isoToday();
-    document.getElementById('strengthDate').value = isoToday();
-    document.getElementById('entryDate').addEventListener('change', refreshSummary);
-    document.getElementById('measureDate').addEventListener('change', prefillMeasurements);
-    document.getElementById('dailyDate').value = isoToday();
-    document.getElementById('dailyDate').addEventListener('change', renderDailyHabits);
+    setSelectedDate(isoToday(), false);
+    document.getElementById('globalDate').addEventListener('change', e => {
+        if (e.target.value) setSelectedDate(e.target.value);
+    });
+    // If the app stays open past midnight while showing "Today", roll over to the new day
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && followingToday && selectedDate !== isoToday()) setSelectedDate(isoToday());
+    });
     document.getElementById('spentInput').addEventListener('change', saveSpent);
     await tryRestoreSession();
 });
@@ -1440,6 +1464,41 @@ function toISODate(d) {
 
 function isoToday() {
     return toISODate(new Date());
+}
+
+// ── Global date (header button) ────────────────────────────────────────────
+// One date drives every card; the per-card hidden inputs mirror it.
+const DATE_INPUT_IDS = ['entryDate', 'measureDate', 'cardioDate', 'strengthDate', 'dailyDate'];
+let selectedDate   = null;
+let followingToday = true;
+
+function setSelectedDate(date, refresh = true) {
+    selectedDate   = date;
+    followingToday = date === isoToday();
+    DATE_INPUT_IDS.forEach(id => { document.getElementById(id).value = date; });
+    document.getElementById('globalDate').value = date;
+
+    const btn = document.getElementById('dateBtn');
+    btn.textContent = dateButtonLabel(date);
+    btn.classList.toggle('past', !followingToday);
+
+    if (refresh) { refreshSummary(); prefillMeasurements(); renderDailyHabits(); }
+}
+
+function dateButtonLabel(date) {
+    if (date === isoToday()) return 'Today';
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    if (date === toISODate(y)) return 'Yesterday';
+    const [yy, mm, dd] = date.split('-').map(Number);
+    const opts = { day: 'numeric', month: 'short' };
+    if (yy !== new Date().getFullYear()) opts.year = '2-digit';
+    return new Date(yy, mm - 1, dd).toLocaleDateString(undefined, opts);
+}
+
+function openDatePicker() {
+    const input = document.getElementById('globalDate');
+    try { input.showPicker(); }
+    catch { input.focus(); input.click(); }
 }
 
 // ── Menu & theme ──────────────────────────────────────────────────────────
@@ -1567,6 +1626,7 @@ async function signOut() {
     data = {};
     document.getElementById('mainApp').style.display    = 'none';
     document.getElementById('signOutBtn').style.display = 'none';
+    document.getElementById('dateBtnWrap').style.display = 'none';
     document.getElementById('menuAccount').style.display = 'none';
     document.getElementById('setupCard').style.display   = 'block';
     document.getElementById('authPassword').value = '';
@@ -1613,6 +1673,7 @@ function boot() {
     document.getElementById('setupCard').style.display = 'none';
     document.getElementById('mainApp').style.display   = 'block';
     document.getElementById('signOutBtn').style.display = 'block';
+    document.getElementById('dateBtnWrap').style.display = 'block';
     document.getElementById('menuAccount').style.display = 'block';
     document.getElementById('menuEmail').textContent = user.email;
     goals = data._goals || null;
@@ -1982,8 +2043,7 @@ function renderHabitHistory() {
 
 // Jump to the Habits tab for a given day.
 function openHabitDate(date) {
-    document.getElementById('dailyDate').value = date;
-    renderDailyHabits();
+    setSelectedDate(date);
     switchTab('habits');
     scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -2802,8 +2862,7 @@ function renderProjectionChart() {
 }
 
 function fillForm(date) {
-    document.getElementById('entryDate').value   = date;
-    document.getElementById('measureDate').value = date;
+    setSelectedDate(date);
     const e = data[date];
     if (e) {
         document.getElementById('fatInput').value     = e.fat     ?? '';
