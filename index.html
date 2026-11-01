@@ -1396,6 +1396,23 @@ const SUPABASE_URL = 'https://lahduaymzcvbuwkfdzkx.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_E97aO_jWB_qGCYVKQoYf0w_9VsJlmJG';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Where Supabase email links (sign-up confirmation) should send the user back to:
+// the page the app is actually running on, not the project's default Site URL.
+const APP_URL = location.origin + location.pathname;
+
+// Supabase reports link errors in the URL hash (e.g. #error=access_denied&error_code=otp_expired).
+function handleAuthRedirectErrors() {
+    if (!location.hash || location.hash.length < 2) return;
+    const params = new URLSearchParams(location.hash.slice(1));
+    const code = params.get('error_code') || params.get('error');
+    if (!code) return;
+    const msg = code === 'otp_expired'
+        ? 'Confirmation link is invalid or expired. Sign in to get a new one.'
+        : (params.get('error_description') || code).replace(/\+/g, ' ');
+    history.replaceState(null, '', APP_URL);
+    setTimeout(() => flash(msg, 'err'), 300);
+}
+
 let user  = null;   // Supabase auth user
 let data  = {};     // { "_goals": {...}, "YYYY-MM-DD": { fat, carbs, protein } }
 let goals = null;   // { fat, carbs, protein }
@@ -1508,11 +1525,14 @@ async function signUp() {
     const password = document.getElementById('authPassword').value;
     if (!email || !password) { flash('Enter email and password.', 'err'); return; }
 
-    const { data: res, error } = await sb.auth.signUp({ email, password });
+    const { data: res, error } = await sb.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: APP_URL },
+    });
     if (error) { flash(error.message, 'err'); return; }
 
     if (!res.session) {
-        flash('Check your email to confirm your account, then sign in.', 'ok');
+        flash('Check your email and click the confirmation link.', 'ok');
     } else {
         user = res.user;
         await loadData();
@@ -1526,7 +1546,15 @@ async function signIn() {
     if (!email || !password) { flash('Enter email and password.', 'err'); return; }
 
     const { data: res, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { flash(error.message, 'err'); return; }
+    if (error) {
+        if (/not confirmed/i.test(error.message)) {
+            const { error: rErr } = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: APP_URL } });
+            flash(rErr ? rErr.message : 'Email not confirmed yet. We sent you a new confirmation link.', rErr ? 'err' : 'ok');
+        } else {
+            flash(error.message, 'err');
+        }
+        return;
+    }
 
     user = res.user;
     await loadData();
@@ -1546,6 +1574,9 @@ async function signOut() {
 
 async function tryRestoreSession() {
     const { data: res } = await sb.auth.getSession();
+    handleAuthRedirectErrors();
+    // Coming back from a confirmation link: drop the token hash from the address bar.
+    if (res.session && /access_token=/.test(location.hash)) history.replaceState(null, '', APP_URL);
     if (!res.session) return;
     user = res.session.user;
     await loadData();
