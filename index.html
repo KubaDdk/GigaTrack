@@ -991,6 +991,7 @@
             <button class="tab-btn" data-tab="training" onclick="switchTab('training')">Training</button>
             <button class="tab-btn" data-tab="habits" onclick="switchTab('habits')">Habits</button>
             <button class="tab-btn" data-tab="other" onclick="switchTab('other')">Other</button>
+            <button class="tab-btn" data-tab="day" onclick="switchTab('day')" id="dayTabBtn">Today</button>
             <button class="tab-btn" data-tab="week" onclick="switchTab('week')">Week</button>
         </div>
 
@@ -1171,6 +1172,31 @@
         </div>
 
         </div><!-- end #habitsTab -->
+
+        <!-- Day tab: everything logged on the selected date -->
+        <div id="dayTab" style="display:none">
+
+        <div class="card">
+            <div class="chart-header">
+                <div class="card-label" style="margin-bottom:0" id="dayCardLabel">Today</div>
+                <div class="range-btns">
+                    <button class="range-btn" onclick="shiftDay(-1)" aria-label="Previous day">‹ Prev</button>
+                    <button class="range-btn" onclick="shiftDay(1)" aria-label="Next day">Next ›</button>
+                </div>
+            </div>
+            <div class="goals-summary" id="dayRange" style="text-align:center;margin:0.6rem 0 0.4rem"></div>
+            <div class="wk-rings-wrap">
+                <svg class="wk-rings" id="dayRings" viewBox="0 0 220 220" role="img" aria-label="Daily progress rings"></svg>
+                <div class="wk-legend" id="dayLegend"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-label" id="dayListLabel">Logged today</div>
+            <div id="dayList"></div>
+        </div>
+
+        </div><!-- end #dayTab -->
 
         <!-- Week tab: everything logged in the week of the selected date -->
         <div id="weekTab" style="display:none">
@@ -1591,7 +1617,7 @@ function setTheme(theme) {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-const TABS = ['measurement', 'cardio', 'training', 'habits', 'other', 'week'];
+const TABS = ['measurement', 'cardio', 'training', 'habits', 'other', 'day', 'week'];
 let currentTab = 'measurement';
 
 function switchTab(tab) {
@@ -1783,28 +1809,13 @@ function shiftWeek(delta) {
     setSelectedDate(toISODate(new Date(y, m - 1, d + delta * 7)));
 }
 
-function renderWeek() {
-    const svg = document.getElementById('wkRings');
-    if (!svg || !selectedDate || !user) return;
-    const dates = weekDatesFor(selectedDate);
-    const today = isoToday();
+function shiftDay(delta) {
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    setSelectedDate(toISODate(new Date(y, m - 1, d + delta)));
+}
 
-    const [a, b] = [dates[0], dates[6]].map(d => new Date(d + 'T00:00:00')
-        .toLocaleDateString(undefined, { day: 'numeric', month: 'short' }));
-    document.getElementById('wkRange').textContent =
-        `${a} – ${b}` + (dates.includes(today) ? ' · This week' : '');
-
-    // Scores
-    const scores = WEEK_RINGS.map(r => {
-        if (r.key === 'habits') {
-            const sum = dates.reduce((t, d) => t + habitDayScore(d), 0);
-            return { ...r, pct: sum / 7, text: `<b>${Math.round(sum / 7 * 100)}%</b>` };
-        }
-        const n = dates.filter(d => TAB_COMPLETE[r.key](d)).length;
-        return { ...r, pct: n / 7, text: `<b>${n}</b>/7 days` };
-    });
-
-    // Rings
+// Concentric rings: scores = [{ label, color, pct (0..1), text }]
+function drawRings(svgId, legendId, scores, centerLbl) {
     const C = 110, W = 13, GAP = 4;
     let out = '';
     scores.forEach((r, i) => {
@@ -1816,46 +1827,103 @@ function renderWeek() {
             stroke-width="${W}" stroke-linecap="round" stroke-dasharray="${val} ${len}"
             transform="rotate(-90 ${C} ${C})"><title>${r.label}: ${Math.round(r.pct * 100)}%</title></circle>`;
     });
-    const overall = Math.round(scores.reduce((t, r) => t + r.pct, 0) / scores.length * 100);
+    const overall = Math.round(scores.reduce((t, r) => t + Math.min(1, r.pct), 0) / scores.length * 100);
     out += `<text class="wk-center-pct" x="${C}" y="${C + 4}" text-anchor="middle">${overall}%</text>`;
-    out += `<text class="wk-center-lbl" x="${C}" y="${C + 16}" text-anchor="middle">this week</text>`;
-    svg.innerHTML = out;
+    out += `<text class="wk-center-lbl" x="${C}" y="${C + 16}" text-anchor="middle">${centerLbl}</text>`;
+    document.getElementById(svgId).innerHTML = out;
 
-    document.getElementById('wkLegend').innerHTML = scores.map(r =>
+    document.getElementById(legendId).innerHTML = scores.map(r =>
         `<div class="wk-leg"><span class="wk-dot" style="background:${r.color}"></span>
             <span class="wk-leg-name">${r.label}</span><span class="wk-leg-val">${r.text}</span></div>`).join('');
+}
 
-    // Day-by-day list
+// Everything logged on one date, as <li> rows (empty string if nothing).
+function dayItemsHTML(d) {
     const cap = s => s[0].toUpperCase() + s.slice(1);
     const fmt = n => (Math.round(n * 10) / 10).toString();
-    document.getElementById('wkList').innerHTML = dates.map(d => {
-        const e = data[d] || {};
-        const items = [];
-        const item = (ic, main, sub) => items.push(
-            `<li class="wk-item"><span class="wk-ic">${ic}</span><span>${main}${sub ? ` <span class="wk-sub">· ${sub}</span>` : ''}</span></li>`);
+    const e = data[d] || {};
+    const items = [];
+    const item = (ic, main, sub) => items.push(
+        `<li class="wk-item"><span class="wk-ic">${ic}</span><span>${main}${sub ? ` <span class="wk-sub">· ${sub}</span>` : ''}</span></li>`);
 
-        if (e.weight != null || e.waist != null)
-            item('⚖️', [e.weight != null ? `${fmt(e.weight)} kg` : '', e.waist != null ? `${fmt(e.waist)} cm waist` : ''].filter(Boolean).join(' · '));
-        (data._cardio || []).filter(c => c.date === d).forEach(c =>
-            item('🏃', `${cap(c.type || 'cardio')} ${c.duration ? c.duration + ' min' : ''}`.trim(), c.calories ? `${c.calories} kcal` : ''));
-        (data._strength || []).filter(t => t.date === d).forEach(t =>
-            item('🏋️', (t.parts || []).map(cap).join(', ') || 'Strength session'));
-        const h = dailyHabits(d);
-        const hp = [];
-        if (countTrue(h.glasses)) hp.push(`💧 ${countTrue(h.glasses)}/5`);
-        if (countTrue(h.meals))   hp.push(`🍽️ ${countTrue(h.meals)}/4`);
-        if (h.noSpend)            hp.push('💰 no spend');
-        else if (h.spent != null) hp.push(`💰 ${fmtEur(h.spent)}`);
-        if (hp.length) item('✅', hp.join('&nbsp;&nbsp;'));
-        if (e.fat != null || e.carbs != null || e.protein != null) {
-            const kcal = Math.round((e.fat || 0) * 9 + (e.carbs || 0) * 4 + (e.protein || 0) * 4);
-            item('🍎', `${kcal.toLocaleString()} kcal`, `${fmt(e.fat || 0)}g fat · ${fmt(e.carbs || 0)}g carbs · ${fmt(e.protein || 0)}g protein`);
+    if (e.weight != null || e.waist != null)
+        item('⚖️', [e.weight != null ? `${fmt(e.weight)} kg` : '', e.waist != null ? `${fmt(e.waist)} cm waist` : ''].filter(Boolean).join(' · '));
+    (data._cardio || []).filter(c => c.date === d).forEach(c =>
+        item('🏃', `${cap(c.type || 'cardio')} ${c.duration ? c.duration + ' min' : ''}`.trim(), c.calories ? `${c.calories} kcal` : ''));
+    (data._strength || []).filter(t => t.date === d).forEach(t =>
+        item('🏋️', (t.parts || []).map(cap).join(', ') || 'Strength session'));
+    const h = dailyHabits(d);
+    const hp = [];
+    if (countTrue(h.glasses)) hp.push(`💧 ${countTrue(h.glasses)}/5`);
+    if (countTrue(h.meals))   hp.push(`🍽️ ${countTrue(h.meals)}/4`);
+    if (h.noSpend)            hp.push('💰 no spend');
+    else if (h.spent != null) hp.push(`💰 ${fmtEur(h.spent)}`);
+    if (hp.length) item('✅', hp.join('&nbsp;&nbsp;'));
+    if (e.fat != null || e.carbs != null || e.protein != null) {
+        const kcal = Math.round((e.fat || 0) * 9 + (e.carbs || 0) * 4 + (e.protein || 0) * 4);
+        item('🍎', `${kcal.toLocaleString()} kcal`, `${fmt(e.fat || 0)}g fat · ${fmt(e.carbs || 0)}g carbs · ${fmt(e.protein || 0)}g protein`);
+    }
+    return items.length ? `<ul class="wk-items">${items.join('')}</ul>` : '';
+}
+
+function renderDay() {
+    if (!document.getElementById('dayRings') || !selectedDate || !user) return;
+    const d = selectedDate;
+    const label = dateButtonLabel(d);
+    document.getElementById('dayTabBtn').textContent = label;
+    document.getElementById('dayCardLabel').textContent = label;
+    document.getElementById('dayListLabel').textContent = d === isoToday() ? 'Logged today' : `Logged · ${label}`;
+    document.getElementById('dayRange').textContent = new Date(d + 'T00:00:00')
+        .toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+
+    const e = data[d] || {};
+    const yesNo = ok => ok ? '<b>✓</b>' : '—';
+    const scores = WEEK_RINGS.map(r => {
+        if (r.key === 'habits') {
+            const pct = habitDayScore(d);
+            return { ...r, pct, text: `<b>${Math.round(pct * 100)}%</b>` };
         }
+        if (r.key === 'other' && goals && (e.fat != null || e.carbs != null || e.protein != null)) {
+            // Food: calories eaten vs the daily goal
+            const kcal = (e.fat || 0) * 9 + (e.carbs || 0) * 4 + (e.protein || 0) * 4;
+            const goal = goals.fat * 9 + goals.carbs * 4 + goals.protein * 4;
+            const pct  = goal ? kcal / goal : 1;
+            return { ...r, pct, text: `<b>${Math.round(pct * 100)}%</b> of goal` };
+        }
+        const done = TAB_COMPLETE[r.key](d);
+        return { ...r, pct: done ? 1 : 0, text: yesNo(done) };
+    });
+    drawRings('dayRings', 'dayLegend', scores, d === isoToday() ? 'today' : 'this day');
 
+    document.getElementById('dayList').innerHTML = dayItemsHTML(d) || '<div class="wk-empty">Nothing logged yet</div>';
+}
+
+function renderWeek() {
+    renderDay();
+    const svg = document.getElementById('wkRings');
+    if (!svg || !selectedDate || !user) return;
+    const dates = weekDatesFor(selectedDate);
+    const today = isoToday();
+
+    const [a, b] = [dates[0], dates[6]].map(d => new Date(d + 'T00:00:00')
+        .toLocaleDateString(undefined, { day: 'numeric', month: 'short' }));
+    document.getElementById('wkRange').textContent =
+        `${a} – ${b}` + (dates.includes(today) ? ' · This week' : '');
+
+    const scores = WEEK_RINGS.map(r => {
+        if (r.key === 'habits') {
+            const sum = dates.reduce((t, d) => t + habitDayScore(d), 0);
+            return { ...r, pct: sum / 7, text: `<b>${Math.round(sum / 7 * 100)}%</b>` };
+        }
+        const n = dates.filter(d => TAB_COMPLETE[r.key](d)).length;
+        return { ...r, pct: n / 7, text: `<b>${n}</b>/7 days` };
+    });
+    drawRings('wkRings', 'wkLegend', scores, 'this week');
+
+    document.getElementById('wkList').innerHTML = dates.map(d => {
         const dt = new Date(d + 'T00:00:00');
         const name = d === today ? 'Today' : dt.toLocaleDateString(undefined, { weekday: 'long' });
-        const body = items.length ? `<ul class="wk-items">${items.join('')}</ul>`
-            : `<div class="wk-empty">${d > today ? '—' : 'Nothing logged'}</div>`;
+        const body = dayItemsHTML(d) || `<div class="wk-empty">${d > today ? '—' : 'Nothing logged'}</div>`;
         const cls = ['wk-day', d === today ? 'today' : '', d === selectedDate ? 'selected' : ''].join(' ');
         return `<div class="${cls}" onclick="setSelectedDate('${d}')" title="Set date to this day">
             <div class="wk-day-head"><span class="wk-day-name">${name}</span>
