@@ -150,6 +150,28 @@
             box-shadow: 0 0 0 3px rgba(91, 143, 255, 0.12);
         }
 
+        /* ── Measurement steppers ── */
+        .meas-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .stepper { display: flex; gap: 0.4rem; align-items: stretch; }
+        .stepper input { flex: 1; min-width: 0; text-align: center; font-size: 1.05rem; }
+        .stepper input::-webkit-inner-spin-button,
+        .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .stepper input[type="number"] { -moz-appearance: textfield; }
+        .step-btn {
+            flex: 0 0 auto;
+            width: 2.9rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--blue);
+            font-size: 0.85rem;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .step-btn:hover  { border-color: var(--blue); }
+        .step-btn:active { background: #1a1a2e; }
+
         .field input[type="number"]::-webkit-inner-spin-button,
         .field input[type="number"]::-webkit-outer-spin-button { opacity: 0.4; }
 
@@ -728,6 +750,8 @@
             .hdr h1 { font-size: 1.5rem; letter-spacing: 5px; }
             .card { padding: 1.25rem; border-radius: 12px; }
             .top-row { grid-template-columns: 1fr; gap: 1.25rem; }
+            .meas-inputs { grid-template-columns: 1fr; gap: 0; }
+            .step-btn { width: 3.4rem; font-size: 1rem; }
             .triple-row, .triple-row.dual { grid-template-columns: 1fr; gap: 1.25rem; }
             .tabs { gap: 0.4rem; }
             .tab-btn { padding: 0.5rem 1rem; font-size: 0.62rem; }
@@ -799,14 +823,22 @@
                 <label>Date</label>
                 <input type="date" id="measureDate">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+            <div class="meas-inputs">
                 <div class="field">
                     <label>Weight (kg)</label>
-                    <input type="number" id="weightInput" min="0" step="0.1" placeholder="0">
+                    <div class="stepper">
+                        <button type="button" class="step-btn" onclick="stepMeasure('weightInput', -0.5)" aria-label="Decrease weight">▼</button>
+                        <input type="number" id="weightInput" min="0" step="0.1" inputmode="decimal">
+                        <button type="button" class="step-btn" onclick="stepMeasure('weightInput', 0.5)" aria-label="Increase weight">▲</button>
+                    </div>
                 </div>
                 <div class="field">
                     <label>Waist (cm)</label>
-                    <input type="number" id="waistInput" min="0" step="0.1" placeholder="0">
+                    <div class="stepper">
+                        <button type="button" class="step-btn" onclick="stepMeasure('waistInput', -0.5)" aria-label="Decrease waist">▼</button>
+                        <input type="number" id="waistInput" min="0" step="0.1" inputmode="decimal">
+                        <button type="button" class="step-btn" onclick="stepMeasure('waistInput', 0.5)" aria-label="Increase waist">▲</button>
+                    </div>
                 </div>
             </div>
             <button class="btn btn-primary" onclick="saveMeasurements()">Save</button>
@@ -1284,6 +1316,7 @@ addEventListener('DOMContentLoaded', async () => {
     document.getElementById('habitDate').value = isoToday();
     document.getElementById('entryDate').addEventListener('change', refreshSummary);
     document.getElementById('habitDate').addEventListener('change', refreshHabitsUI);
+    document.getElementById('measureDate').addEventListener('change', prefillMeasurements);
     renderSets();
     await tryRestoreSession();
 });
@@ -1393,6 +1426,7 @@ function boot() {
     goals = data._goals || null;
     loadGoalsUI();
     loadProfileUI();
+    prefillMeasurements();
     render();
     refreshSummary();
     renderCalorieChart();
@@ -1431,8 +1465,9 @@ async function saveEntry() {
 async function saveMeasurements() {
     const date   = document.getElementById('measureDate').value;
     if (!date) { flash('Pick a date first.', 'err'); return; }
-    const weight = toNum(document.getElementById('weightInput').value);
-    const waist  = toNum(document.getElementById('waistInput').value);
+    const weight = toNumOrNull(document.getElementById('weightInput').value);
+    const waist  = toNumOrNull(document.getElementById('waistInput').value);
+    if (weight == null && waist == null) { flash('Enter weight or waist.', 'err'); return; }
     data[date] = { ...(data[date] || {}), weight, waist };
     try {
         await write();
@@ -1444,6 +1479,30 @@ async function saveMeasurements() {
     } catch (e) {
         flash('Save failed: ' + e.message, 'err');
     }
+}
+
+// Latest logged value of `key` on or before `date` (falls back to the most recent overall).
+function latestMeasure(key, date) {
+    const dates = Object.keys(data)
+        .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d) && data[d][key] != null && data[d][key] > 0)
+        .sort();
+    if (!dates.length) return null;
+    const onOrBefore = dates.filter(d => d <= date);
+    const d = onOrBefore.length ? onOrBefore[onOrBefore.length - 1] : dates[dates.length - 1];
+    return data[d][key];
+}
+
+function prefillMeasurements() {
+    const date = document.getElementById('measureDate').value || isoToday();
+    document.getElementById('weightInput').value = latestMeasure('weight', date) ?? '';
+    document.getElementById('waistInput').value  = latestMeasure('waist',  date) ?? '';
+}
+
+function stepMeasure(id, delta) {
+    const el  = document.getElementById(id);
+    const cur = parseFloat(el.value);
+    const base = isNaN(cur) ? 0 : cur;
+    el.value = Math.max(0, Math.round((base + delta) * 10) / 10).toFixed(1);
 }
 
 function refreshSummary() {
@@ -2811,11 +2870,10 @@ function fillForm(date) {
         document.getElementById('fatInput').value     = e.fat     ?? '';
         document.getElementById('carbsInput').value   = e.carbs   ?? '';
         document.getElementById('proteinInput').value = e.protein ?? '';
-        document.getElementById('weightInput').value  = e.weight  ?? '';
-        document.getElementById('waistInput').value   = e.waist   ?? '';
     }
+    prefillMeasurements();
     refreshSummary();
-    document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('entryDate').closest('.card').scrollIntoView({ behavior: 'smooth' });
 }
 
 let snackTimer;
@@ -2825,6 +2883,11 @@ function flash(msg, type) {
     el.className = `snackbar ${type} show`;
     clearTimeout(snackTimer);
     snackTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function toNumOrNull(v) {
+    const n = parseFloat(v);
+    return isNaN(n) ? null : Math.round(n * 10) / 10;
 }
 
 function toNum(v) {
