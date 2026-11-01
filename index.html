@@ -681,86 +681,6 @@
         .tab-btn:hover  { border-color: rgba(91,143,255,0.4); color: var(--blue); }
         .tab-btn.active { background: #1a1a2e; border-color: var(--blue); color: var(--blue); }
 
-        /* ── Habits ── */
-        .habit-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.85rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-        }
-        .habit-row:last-child { border-bottom: none; }
-        .habit-label {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            font-size: 0.85rem;
-            color: var(--text);
-        }
-        .habit-icon { font-size: 1.1rem; }
-        .habit-checkbox {
-            width: 22px;
-            height: 22px;
-            accent-color: var(--blue);
-            cursor: pointer;
-        }
-
-        .habit-pie-wrap {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1.2rem;
-        }
-
-        .streak-chip-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.55rem;
-            margin-bottom: 0.4rem;
-        }
-        .streak-chip {
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-            padding: 0.35rem 0.7rem;
-            border-radius: 20px;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            font-size: 0.72rem;
-            color: var(--muted);
-        }
-        .streak-chip.active {
-            border-color: rgba(240,180,41,0.4);
-            background: linear-gradient(135deg, rgba(240,180,41,0.12), rgba(249,115,22,0.05));
-            color: var(--text);
-        }
-        .streak-chip-flame {
-            font-size: 0.85rem;
-            filter: grayscale(1) opacity(0.35);
-        }
-        .streak-chip.active .streak-chip-flame { filter: none; }
-        .streak-chip-num { font-weight: 700; color: var(--gold); }
-
-        .habit-group-label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.62rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin: 1.3rem 0 0.2rem;
-        }
-        .habit-group-label:first-of-type { margin-top: 0.4rem; }
-        .habit-schedule-note {
-            font-size: 0.6rem;
-            font-weight: 400;
-            letter-spacing: 0;
-            text-transform: none;
-            opacity: 0.7;
-        }
-
         /* ── Weekly Overview ── */
         .week-table { width: 100%; border-collapse: collapse; }
         .week-table th, .week-table td { text-align: center; padding: 0.55rem 0.3rem; }
@@ -786,6 +706,10 @@
         .week-cell { font-size: 1rem; }
         .week-cell.done    { color: var(--green); }
         .week-cell.missed  { color: var(--muted); }
+        .week-cell.partial, .habit-cell.partial { color: var(--gold); font-size: 0.78rem; }
+        .week-cell.spent,   .habit-cell.spent   { color: #f87171; font-size: 0.72rem; white-space: nowrap; }
+        .habit-cell.done   { color: var(--green); }
+        .habit-cell.missed { color: var(--muted); }
         .week-cell.na       { color: var(--muted); opacity: 0.25; }
         .week-cell.future   { color: var(--muted); opacity: 0.25; }
         .week-table td.today-col, .week-table th.today { background: rgba(91,143,255,0.06); }
@@ -809,8 +733,6 @@
             .tabs { gap: 0.4rem; }
             .tab-btn { padding: 0.5rem 1rem; font-size: 0.62rem; }
             .macro-row { gap: 0.5rem; }
-            .habit-pie-wrap svg { width: 100px; height: 100px; }
-            .streak-chip { font-size: 0.66rem; padding: 0.3rem 0.6rem; }
             .hist-table { font-size: 0.78rem; }
             .hist-table th, .hist-table td { padding: 0.5rem 0.45rem; }
 
@@ -1300,59 +1222,7 @@
             <div id="histContainer" style="overflow-x:auto"><div class="empty">No entries yet.</div></div>
         </div>
 
-        <!-- Habits -->
-
-            <!-- All Habits (check-in) -->
-            <div class="card">
-                <div class="card-label">Habits</div>
-                <div class="field">
-                    <label>Date</label>
-                    <input type="date" id="habitDate">
-                </div>
-
-                <div class="habit-pie-wrap" id="habitPieChart"></div>
-                <div class="streak-chip-row" id="streakChipRow"></div>
-
-                <div class="habit-group-label">💧 Water</div>
-                <div class="habit-row">
-                    <div class="habit-label"><span class="habit-icon">🌅</span> Morning glass</div>
-                    <input type="checkbox" class="habit-checkbox" id="waterMorning" onchange="toggleWaterHabit()">
-                </div>
-                <div class="habit-row">
-                    <div class="habit-label"><span class="habit-icon">☀️</span> Noon glass</div>
-                    <input type="checkbox" class="habit-checkbox" id="waterNoon" onchange="toggleWaterHabit()">
-                </div>
-                <div class="habit-row">
-                    <div class="habit-label"><span class="habit-icon">🌙</span> Evening glass</div>
-                    <input type="checkbox" class="habit-checkbox" id="waterEvening" onchange="toggleWaterHabit()">
-                </div>
-
-                <div class="habit-group-label">🏃 Cardio <span class="habit-schedule-note">Mon · Tue · Thu</span></div>
-                <div class="habit-row" id="cardioHabitRow">
-                    <div class="habit-label"><span class="habit-icon">🏃</span> 20 min morning cardio</div>
-                    <input type="checkbox" class="habit-checkbox" id="cardioHabitCheck" onchange="toggleCardioHabit()">
-                </div>
-                <div class="empty" id="cardioNotScheduled" style="display:none;padding:0.5rem 0;text-align:left">Not scheduled this day.</div>
-
-                <div class="habit-group-label">💪 Strength</div>
-                <div class="habit-row">
-                    <div class="habit-label"><span class="habit-icon">💪</span> Strength training session</div>
-                    <input type="checkbox" class="habit-checkbox" id="strengthHabitCheck" onchange="toggleStrengthHabit()">
-                </div>
-
-                <div class="habit-group-label">🥗 Food</div>
-                <div class="habit-row">
-                    <div class="habit-label"><span class="habit-icon">🥗</span> Food intake was on plan</div>
-                    <input type="checkbox" class="habit-checkbox" id="foodHabitCheck" onchange="toggleFoodHabit()">
-                </div>
-
-                <div class="habit-group-label">💰 No Spend</div>
-                <div class="habit-row">
-                    <div class="habit-label"><span class="habit-icon">💰</span> No money spent today</div>
-                    <input type="checkbox" class="habit-checkbox" id="noSpendHabitCheck" onchange="toggleNoSpendHabit()">
-                </div>
-            </div>
-
+        <!-- Habits overview (data from the Habits tab) -->
             <!-- Weekly Overview -->
             <div class="card">
                 <div class="chart-header">
@@ -1404,9 +1274,7 @@ addEventListener('DOMContentLoaded', async () => {
     document.getElementById('measureDate').value  = isoToday();
     document.getElementById('cardioDate').value   = isoToday();
     document.getElementById('strengthDate').value = isoToday();
-    document.getElementById('habitDate').value = isoToday();
     document.getElementById('entryDate').addEventListener('change', refreshSummary);
-    document.getElementById('habitDate').addEventListener('change', refreshHabitsUI);
     document.getElementById('measureDate').addEventListener('change', prefillMeasurements);
     document.getElementById('dailyDate').value = isoToday();
     document.getElementById('dailyDate').addEventListener('change', renderDailyHabits);
@@ -1567,8 +1435,6 @@ function boot() {
     renderChart();
     renderProjectionChart();
     renderCardioChart();
-    refreshHabitsUI();
-    renderStreaks();
     renderHabitHistory();
     renderWeekOverview();
 }
@@ -1845,179 +1711,33 @@ function render() {
         </table>`;
 }
 
-// ── Habits ────────────────────────────────────────────────────────────────
-
-// Water (every day, 3 checks)
-function isWaterComplete(date) {
-    const w = data[date] && data[date].habits && data[date].habits.water;
-    return !!(w && w.morning && w.noon && w.evening);
-}
-
-function waterProgress(date) {
-    const w = data[date] && data[date].habits && data[date].habits.water;
-    if (!w) return 0;
-    const glasses = [w.morning, w.noon, w.evening].filter(Boolean).length;
-    return glasses / 3;
-}
-
-function calcWaterStreak() {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    // Grace period: an incomplete today doesn't break the streak yet, it just isn't counted.
-    if (!isWaterComplete(isoToday())) d.setDate(d.getDate() - 1);
-    let streak = 0;
-    while (isWaterComplete(toISODate(d))) {
-        streak++;
-        d.setDate(d.getDate() - 1);
-    }
-    return streak;
-}
-
-// Cardio (Mon / Tue / Thu, 20min morning)
-const CARDIO_HABIT_DAYS = [1, 2, 4]; // Date.getDay(): Mon=1, Tue=2, Thu=4
-
-function isCardioScheduledDay(date) {
-    return CARDIO_HABIT_DAYS.includes(new Date(date + 'T00:00:00').getDay());
-}
-
-function isCardioHabitDone(date) {
-    return !!(data[date] && data[date].habits && data[date].habits.cardio20);
-}
-
-function calcCardioStreak() {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    const todayISO = isoToday();
-    // Grace period: an incomplete but still-scheduled today doesn't break the streak yet.
-    if (isCardioScheduledDay(todayISO) && !isCardioHabitDone(todayISO)) d.setDate(d.getDate() - 1);
-    let streak = 0;
-    for (let i = 0; i < 3650; i++) { // safety cap
-        const iso = toISODate(d);
-        if (isCardioScheduledDay(iso)) {
-            if (isCardioHabitDone(iso)) streak++;
-            else break;
-        }
-        d.setDate(d.getDate() - 1);
-    }
-    return streak;
-}
-
-// Strength (every day)
-function isStrengthHabitDone(date) {
-    return !!(data[date] && data[date].habits && data[date].habits.strength);
-}
-
-function calcStrengthStreak() {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    if (!isStrengthHabitDone(isoToday())) d.setDate(d.getDate() - 1);
-    let streak = 0;
-    while (isStrengthHabitDone(toISODate(d))) {
-        streak++;
-        d.setDate(d.getDate() - 1);
-    }
-    return streak;
-}
-
-// Food (every day)
-function isFoodHabitDone(date) {
-    return !!(data[date] && data[date].habits && data[date].habits.food);
-}
-
-function calcFoodStreak() {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    if (!isFoodHabitDone(isoToday())) d.setDate(d.getDate() - 1);
-    let streak = 0;
-    while (isFoodHabitDone(toISODate(d))) {
-        streak++;
-        d.setDate(d.getDate() - 1);
-    }
-    return streak;
-}
-
-// No Spend (every day)
-function isNoSpendHabitDone(date) {
-    return !!(data[date] && data[date].habits && data[date].habits.noSpend);
-}
-
-function calcNoSpendStreak() {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    if (!isNoSpendHabitDone(isoToday())) d.setDate(d.getDate() - 1);
-    let streak = 0;
-    while (isNoSpendHabitDone(toISODate(d))) {
-        streak++;
-        d.setDate(d.getDate() - 1);
-    }
-    return streak;
-}
-
+// ── Habits (overview + history, using the Habits tab data) ──────────────
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+const countTrue = arr => (arr || []).filter(Boolean).length;
+const fmtEur = v => '€' + (Math.round(v * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+// Each row: status(date) -> { cls: 'done' | 'partial' | 'missed' | 'spent', text }
 const HABIT_ROWS = [
-    { icon: '💧', label: 'Water',    scheduled: () => true,              done: isWaterComplete,      progress: waterProgress },
-    { icon: '🏃', label: 'Cardio',   scheduled: isCardioScheduledDay,    done: isCardioHabitDone,    progress: d => isCardioHabitDone(d) ? 1 : 0 },
-    { icon: '💪', label: 'Strength', scheduled: () => true,              done: isStrengthHabitDone,  progress: d => isStrengthHabitDone(d) ? 1 : 0 },
-    { icon: '🥗', label: 'Food',     scheduled: () => true,              done: isFoodHabitDone,      progress: d => isFoodHabitDone(d) ? 1 : 0 },
-    { icon: '💰', label: 'No Spend', scheduled: () => true,              done: isNoSpendHabitDone,   progress: d => isNoSpendHabitDone(d) ? 1 : 0 },
+    { icon: '💧', label: 'Water', status: d => {
+        const n = countTrue(dailyHabits(d).glasses);
+        return n >= 5 ? { cls: 'done', text: '✓' } : n > 0 ? { cls: 'partial', text: `${n}/5` } : { cls: 'missed', text: '—' };
+    }},
+    { icon: '💰', label: 'Money', status: d => {
+        const h = dailyHabits(d);
+        if (h.noSpend)       return { cls: 'done',  text: '✓' };
+        if (h.spent != null) return { cls: 'spent', text: fmtEur(h.spent) };
+        return { cls: 'missed', text: '—' };
+    }},
+    { icon: '🍽️', label: 'Meals', status: d => {
+        const n = countTrue(dailyHabits(d).meals);
+        return n >= 4 ? { cls: 'done', text: '✓' } : n > 0 ? { cls: 'partial', text: `${n}/4` } : { cls: 'missed', text: '—' };
+    }},
 ];
 
-// ── Habits: check-in card ────────────────────────────────────────────────
-function refreshHabitsUI() {
-    const date = document.getElementById('habitDate').value;
-
-    const water = (data[date] && data[date].habits && data[date].habits.water) || {};
-    document.getElementById('waterMorning').checked = !!water.morning;
-    document.getElementById('waterNoon').checked    = !!water.noon;
-    document.getElementById('waterEvening').checked = !!water.evening;
-
-    const cardioScheduled = isCardioScheduledDay(date);
-    document.getElementById('cardioHabitRow').style.display     = cardioScheduled ? 'flex' : 'none';
-    document.getElementById('cardioNotScheduled').style.display = cardioScheduled ? 'none' : 'block';
-    document.getElementById('cardioHabitCheck').checked = isCardioHabitDone(date);
-
-    document.getElementById('strengthHabitCheck').checked = isStrengthHabitDone(date);
-
-    document.getElementById('foodHabitCheck').checked = isFoodHabitDone(date);
-    document.getElementById('noSpendHabitCheck').checked = isNoSpendHabitDone(date);
-
-    renderHabitPie();
-}
-
-function renderHabitPie() {
-    const date      = document.getElementById('habitDate').value;
-    const scheduled = HABIT_ROWS.filter(h => h.scheduled(date));
-    const done      = scheduled.filter(h => h.done(date));
-    const progress  = scheduled.reduce((sum, h) => sum + h.progress(date), 0);
-    const pct       = scheduled.length ? Math.round(progress / scheduled.length * 100) : 0;
-
-    const r = 46, c = 2 * Math.PI * r;
-    const offset = c * (1 - pct / 100);
-
-    document.getElementById('habitPieChart').innerHTML = `
-        <svg width="120" height="120" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--border)" stroke-width="12"/>
-            <circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--green)" stroke-width="12"
-                stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}"
-                transform="rotate(-90 60 60)" style="transition: stroke-dashoffset 0.4s ease"/>
-            <text x="60" y="57" text-anchor="middle" fill="var(--text)" font-size="24" font-weight="200">${pct}%</text>
-            <text x="60" y="76" text-anchor="middle" fill="var(--muted)" font-size="9" letter-spacing="1">${done.length}/${scheduled.length} DONE</text>
-        </svg>`;
-}
-
-function renderStreaks() {
-    const streaks = [
-        { icon: '💧', n: calcWaterStreak() },
-        { icon: '🏃', n: calcCardioStreak() },
-        { icon: '💪', n: calcStrengthStreak() },
-        { icon: '🥗', n: calcFoodStreak() },
-        { icon: '💰', n: calcNoSpendStreak() },
-    ];
-    document.getElementById('streakChipRow').innerHTML = streaks.map(s => `
-        <div class="streak-chip${s.n > 0 ? ' active' : ''}">
-            <span>${s.icon}</span><span class="streak-chip-flame">🔥</span><span class="streak-chip-num">${s.n}</span>
-        </div>`).join('');
+function hasDailyHabitData(date) {
+    const h = dailyHabits(date);
+    return countTrue(h.glasses) > 0 || countTrue(h.meals) > 0 || !!h.noSpend || h.spent != null;
 }
 
 async function saveHabitsData() {
@@ -2028,55 +1748,8 @@ async function saveHabitsData() {
         return;
     }
     flash('Saved', 'ok');
-    renderHabitPie();
-    renderStreaks();
     renderHabitHistory();
     renderWeekOverview();
-}
-
-async function toggleWaterHabit() {
-    const date = document.getElementById('habitDate').value;
-    if (!date) return;
-    const water = {
-        morning: document.getElementById('waterMorning').checked,
-        noon:    document.getElementById('waterNoon').checked,
-        evening: document.getElementById('waterEvening').checked,
-    };
-    data[date] = { ...(data[date] || {}), habits: { ...(data[date]?.habits || {}), water } };
-    await saveHabitsData();
-}
-
-async function toggleCardioHabit() {
-    const date = document.getElementById('habitDate').value;
-    if (!date || !isCardioScheduledDay(date)) return;
-    const done = document.getElementById('cardioHabitCheck').checked;
-    data[date] = { ...(data[date] || {}), habits: { ...(data[date]?.habits || {}), cardio20: done } };
-    await saveHabitsData();
-}
-
-async function toggleStrengthHabit() {
-    const date = document.getElementById('habitDate').value;
-    if (!date) return;
-    const done = document.getElementById('strengthHabitCheck').checked;
-    data[date] = { ...(data[date] || {}), habits: { ...(data[date]?.habits || {}), strength: done } };
-    await saveHabitsData();
-}
-
-async function toggleFoodHabit() {
-    const date = document.getElementById('habitDate').value;
-    if (!date) return;
-    const done = document.getElementById('foodHabitCheck').checked;
-    data[date] = { ...(data[date] || {}), habits: { ...(data[date]?.habits || {}), food: done } };
-    await saveHabitsData();
-}
-
-async function toggleNoSpendHabit() {
-    const date = document.getElementById('habitDate').value;
-    if (!date) return;
-    const done = document.getElementById('noSpendHabitCheck').checked;
-    data[date] = { ...(data[date] || {}), habits: { ...(data[date]?.habits || {}), noSpend: done } };
-    renderDailyHabits();
-    await saveHabitsData();
 }
 
 // ── Habits: combined history ─────────────────────────────────────────────
@@ -2084,7 +1757,7 @@ function renderHabitHistory() {
     const container = document.getElementById('habitHistContainer');
     const today     = isoToday();
     const dates     = Object.keys(data)
-        .filter(k => !k.startsWith('_') && data[k] && data[k].habits)
+        .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && hasDailyHabitData(k))
         .sort((a, b) => b.localeCompare(a));
 
     if (!dates.length) {
@@ -2092,22 +1765,20 @@ function renderHabitHistory() {
         return;
     }
 
-    const mark = (scheduled, done) => {
-        if (!scheduled) return '<span style="color:var(--muted);opacity:0.35">·</span>';
-        return done ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--muted)">—</span>';
-    };
-
     const rows = dates.map(date => {
         const dateCls = date === today ? 'c-date today' : 'c-date';
         const dayName = DAY_NAMES[new Date(date + 'T00:00:00').getDay()];
-        const cells   = HABIT_ROWS.map(h => `<td>${mark(h.scheduled(date), h.done(date))}</td>`).join('');
-        return `<tr onclick="fillHabitDate('${date}')">
+        const cells   = HABIT_ROWS.map(h => {
+            const st = h.status(date);
+            return `<td class="habit-cell ${st.cls}">${st.text}</td>`;
+        }).join('');
+        return `<tr onclick="openHabitDate('${date}')" style="cursor:pointer">
             <td class="${dateCls}">${date}${date === today ? ' ·today' : ''} <span style="color:var(--muted)">${dayName}</span></td>
             ${cells}
         </tr>`;
     }).join('');
 
-    const headCells = HABIT_ROWS.map(h => `<th title="${h.label}">${h.icon}</th>`).join('');
+    const headCells = HABIT_ROWS.map(h => `<th title="${h.label}">${h.icon} ${h.label}</th>`).join('');
 
     container.innerHTML = `
         <table class="hist-table">
@@ -2116,9 +1787,12 @@ function renderHabitHistory() {
         </table>`;
 }
 
-function fillHabitDate(date) {
-    document.getElementById('habitDate').value = date;
-    refreshHabitsUI();
+// Jump to the Habits tab for a given day.
+function openHabitDate(date) {
+    document.getElementById('dailyDate').value = date;
+    renderDailyHabits();
+    switchTab('habits');
+    scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── Weekly Overview ──────────────────────────────────────────────────────
@@ -2165,12 +1839,8 @@ function renderWeekOverview() {
 
     const body = '<tbody>' + HABIT_ROWS.map(h => {
         const cells = dates.map(d => {
-            let cls, symbol;
-            if (d > today)            { cls = 'future'; symbol = '·'; }
-            else if (!h.scheduled(d)) { cls = 'na';      symbol = '·'; }
-            else if (h.done(d))       { cls = 'done';    symbol = '✓'; }
-            else                      { cls = 'missed';  symbol = '—'; }
-            return `<td class="week-cell ${cls}${d === today ? ' today-col' : ''}">${symbol}</td>`;
+            const st = d > today ? { cls: 'future', text: '·' } : h.status(d);
+            return `<td class="week-cell ${st.cls}${d === today ? ' today-col' : ''}" onclick="openHabitDate('${d}')" style="cursor:pointer">${st.text}</td>`;
         }).join('');
         return `<tr><td class="week-habit-label">${h.icon} ${h.label}</td>${cells}</tr>`;
     }).join('') + '</tbody>';
@@ -2582,7 +2252,6 @@ async function setDailyHabit(date, patch) {
     data[date] = { ...(data[date] || {}), habits: { ...dailyHabits(date), ...patch } };
     renderDailyHabits();
     await saveHabitsData();
-    refreshHabitsUI();
 }
 
 function toggleDaily(key, n, btn) {
