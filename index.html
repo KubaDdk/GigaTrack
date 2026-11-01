@@ -169,6 +169,34 @@
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
+        .part-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .part-btn {
+            padding: 0.85rem 0.4rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--muted);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.15s;
+        }
+        .part-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(91,143,255,.09); }
+        .last-trained { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+        .lt-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.7rem; }
+        .lt-name { font-size: 0.58rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+        .lt-when { font-size: 0.95rem; color: var(--text); margin-top: 0.2rem; }
+        .lt-when.never { color: var(--muted); }
+        .lt-date { font-size: 0.62rem; color: var(--muted); }
         .last-session {
             font-size: 0.72rem;
             color: var(--muted);
@@ -769,6 +797,7 @@
             .card { padding: 1.25rem; border-radius: 12px; }
             .top-row { grid-template-columns: 1fr; gap: 1.25rem; }
             .meas-inputs { grid-template-columns: 1fr; gap: 0; }
+            .part-grid, .last-trained { grid-template-columns: repeat(2, 1fr); }
             .step-btn { width: 3.4rem; font-size: 1rem; }
             .triple-row, .triple-row.dual { grid-template-columns: 1fr; gap: 1.25rem; }
             .tabs { gap: 0.4rem; }
@@ -828,6 +857,7 @@
 
         <div class="tabs">
             <button class="tab-btn active" data-tab="measurement" onclick="switchTab('measurement')">Measurement</button>
+            <button class="tab-btn" data-tab="cardio" onclick="switchTab('cardio')">Cardio</button>
             <button class="tab-btn" data-tab="training" onclick="switchTab('training')">Training</button>
             <button class="tab-btn" data-tab="other" onclick="switchTab('other')">Other</button>
         </div>
@@ -885,72 +915,44 @@
 
         </div><!-- end #measurementTab -->
 
-        <!-- Training tab -->
-        <div id="trainingTab" style="display:none">
+        <!-- Cardio tab -->
+        <div id="cardioTab" style="display:none">
 
-        <!-- Cardio + Strength row -->
-        <div class="triple-row dual">
-
-            <div class="card" style="margin-bottom:0">
-                <div class="card-label">Cardio Session</div>
-                <div class="field">
-                    <label>Date</label>
-                    <input type="date" id="cardioDate">
-                </div>
-                <div style="margin-bottom:0.3rem">
-                    <label style="display:block;font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Type</label>
-                    <div class="type-pills">
-                        <button class="type-pill active" data-type="run"    onclick="selectCardioType(this)">Run</button>
-                        <button class="type-pill"        data-type="walk"   onclick="selectCardioType(this)">Walk</button>
-                        <button class="type-pill"        data-type="bike"   onclick="selectCardioType(this)">Bike</button>
-                        <button class="type-pill"        data-type="stairs" onclick="selectCardioType(this)">Stairs</button>
-                        <button class="type-pill"        data-type="other"  onclick="selectCardioType(this)">Other</button>
-                    </div>
-                </div>
-                <div class="last-session" id="cardioLast"></div>
-                <div class="field">
-                    <label>Duration (min)</label>
-                    <div class="stepper">
-                        <button type="button" class="step-btn" onclick="stepMeasure('cardioDuration', -1, 0)" aria-label="Decrease duration">▼</button>
-                        <input type="number" id="cardioDuration" min="0" step="1" inputmode="numeric" placeholder="0">
-                        <button type="button" class="step-btn" onclick="stepMeasure('cardioDuration', 1, 0)" aria-label="Increase duration">▲</button>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Calories burned</label>
-                    <div class="stepper">
-                        <button type="button" class="step-btn" onclick="stepMeasure('cardioCalories', -1, 0)" aria-label="Decrease calories">▼</button>
-                        <input type="number" id="cardioCalories" min="0" step="1" inputmode="numeric" placeholder="0">
-                        <button type="button" class="step-btn" onclick="stepMeasure('cardioCalories', 1, 0)" aria-label="Increase calories">▲</button>
-                    </div>
-                </div>
-                <button class="btn btn-primary" onclick="saveCardio()">Log Session</button>
+        <!-- Cardio Session -->
+        <div class="card">
+            <div class="card-label">Cardio Session</div>
+            <div class="field">
+                <label>Date</label>
+                <input type="date" id="cardioDate">
             </div>
-
-            <div class="card" style="margin-bottom:0">
-                <div class="card-label">Strength Session</div>
-                <div class="field">
-                    <label>Date</label>
-                    <input type="date" id="strengthDate">
+            <div style="margin-bottom:0.3rem">
+                <label style="display:block;font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Type</label>
+                <div class="type-pills">
+                    <button class="type-pill active" data-type="run"    onclick="selectCardioType(this)">Run</button>
+                    <button class="type-pill"        data-type="walk"   onclick="selectCardioType(this)">Walk</button>
+                    <button class="type-pill"        data-type="bike"   onclick="selectCardioType(this)">Bike</button>
+                    <button class="type-pill"        data-type="stairs" onclick="selectCardioType(this)">Stairs</button>
+                    <button class="type-pill"        data-type="other"  onclick="selectCardioType(this)">Other</button>
                 </div>
-                <div style="margin-bottom:0.3rem">
-                    <label style="display:block;font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Exercise</label>
-                    <div class="type-pills">
-                        <button class="type-pill active" data-ex="FBW"        onclick="selectStrengthExercise(this)">FBW</button>
-                        <button class="type-pill"        data-ex="Lower Body" onclick="selectStrengthExercise(this)">Lower Body</button>
-                        <button class="type-pill"        data-ex="Upper Body" onclick="selectStrengthExercise(this)">Upper Body</button>
-                    </div>
-                </div>
-                <label style="display:block;font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Sets</label>
-                <div class="set-list" id="setList"></div>
-                <button class="set-add" onclick="addSet()">+ Add Set</button>
-                <div class="field" style="margin-top:0.75rem">
-                    <label>Calories burned (optional)</label>
-                    <input type="number" id="strengthCalories" min="0" step="1" placeholder="0">
-                </div>
-                <button class="btn btn-primary" onclick="saveStrength()">Log Session</button>
             </div>
-
+            <div class="last-session" id="cardioLast"></div>
+            <div class="field">
+                <label>Duration (min)</label>
+                <div class="stepper">
+                    <button type="button" class="step-btn" onclick="stepMeasure('cardioDuration', -1, 0)" aria-label="Decrease duration">▼</button>
+                    <input type="number" id="cardioDuration" min="0" step="1" inputmode="numeric" placeholder="0">
+                    <button type="button" class="step-btn" onclick="stepMeasure('cardioDuration', 1, 0)" aria-label="Increase duration">▲</button>
+                </div>
+            </div>
+            <div class="field">
+                <label>Calories burned</label>
+                <div class="stepper">
+                    <button type="button" class="step-btn" onclick="stepMeasure('cardioCalories', -1, 0)" aria-label="Decrease calories">▼</button>
+                    <input type="number" id="cardioCalories" min="0" step="1" inputmode="numeric" placeholder="0">
+                    <button type="button" class="step-btn" onclick="stepMeasure('cardioCalories', 1, 0)" aria-label="Increase calories">▲</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveCardio()">Log Session</button>
         </div>
 
         <!-- Cardio chart -->
@@ -975,27 +977,34 @@
             </div>
         </div>
 
-        <!-- Strength Progress chart -->
-        <div class="card" id="strengthChartCard" style="display:none">
-            <div class="chart-header">
-                <div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:0">
-                    <div class="card-label" style="margin-bottom:0;flex-shrink:0">Strength Progress</div>
-                    <select id="strengthExerciseChart" class="chart-select" onchange="renderStrengthChart()">
-                        <option value="">— select —</option>
-                    </select>
-                </div>
-                <div class="range-btns" style="flex-shrink:0">
-                    <button class="range-btn active" data-sr="1"  onclick="setStrengthRange(1)">1M</button>
-                    <button class="range-btn"         data-sr="3"  onclick="setStrengthRange(3)">3M</button>
-                    <button class="range-btn"         data-sr="6"  onclick="setStrengthRange(6)">6M</button>
-                    <button class="range-btn"         data-sr="12" onclick="setStrengthRange(12)">1Y</button>
-                </div>
+        </div><!-- end #cardioTab -->
+
+        <!-- Training tab -->
+        <div id="trainingTab" style="display:none">
+
+        <!-- Strength Session -->
+        <div class="card">
+            <div class="card-label">Strength Session</div>
+            <div class="field">
+                <label>Date</label>
+                <input type="date" id="strengthDate">
             </div>
-            <svg id="strengthChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
-            <div class="chart-legend">
-                <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Est. 1RM (kg)</div>
-                <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div>Best weight (kg)</div>
+            <label style="display:block;font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Body part <span style="text-transform:none;letter-spacing:0">(pick one or more)</span></label>
+            <div class="part-grid">
+                <button type="button" class="part-btn" data-part="chest"     onclick="toggleBodyPart(this)">Chest</button>
+                <button type="button" class="part-btn" data-part="back"      onclick="toggleBodyPart(this)">Back</button>
+                <button type="button" class="part-btn" data-part="shoulders" onclick="toggleBodyPart(this)">Shoulders</button>
+                <button type="button" class="part-btn" data-part="legs"      onclick="toggleBodyPart(this)">Legs</button>
+                <button type="button" class="part-btn" data-part="biceps"    onclick="toggleBodyPart(this)">Biceps</button>
+                <button type="button" class="part-btn" data-part="triceps"   onclick="toggleBodyPart(this)">Triceps</button>
             </div>
+            <button class="btn btn-primary" onclick="saveStrength()">Save</button>
+        </div>
+
+        <!-- Last trained per body part -->
+        <div class="card">
+            <div class="card-label">Last Trained</div>
+            <div class="last-trained" id="lastTrained"></div>
         </div>
 
         </div><!-- end #trainingTab -->
@@ -1234,6 +1243,29 @@
             <div class="proj-disclaimer" id="projDisclaimer" style="display:none">Projection assumes current average intake &amp; activity remain constant. Estimates only.</div>
         </div>
 
+        <!-- Strength Progress chart (old set-based sessions) -->
+        <div class="card" id="strengthChartCard" style="display:none">
+            <div class="chart-header">
+                <div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:0">
+                    <div class="card-label" style="margin-bottom:0;flex-shrink:0">Strength Progress</div>
+                    <select id="strengthExerciseChart" class="chart-select" onchange="renderStrengthChart()">
+                        <option value="">— select —</option>
+                    </select>
+                </div>
+                <div class="range-btns" style="flex-shrink:0">
+                    <button class="range-btn active" data-sr="1"  onclick="setStrengthRange(1)">1M</button>
+                    <button class="range-btn"         data-sr="3"  onclick="setStrengthRange(3)">3M</button>
+                    <button class="range-btn"         data-sr="6"  onclick="setStrengthRange(6)">6M</button>
+                    <button class="range-btn"         data-sr="12" onclick="setStrengthRange(12)">1Y</button>
+                </div>
+            </div>
+            <svg id="strengthChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
+            <div class="chart-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Est. 1RM (kg)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div>Best weight (kg)</div>
+            </div>
+        </div>
+
         <!-- History -->
         <div class="card">
             <div class="card-label">History</div>
@@ -1348,7 +1380,6 @@ addEventListener('DOMContentLoaded', async () => {
     document.getElementById('entryDate').addEventListener('change', refreshSummary);
     document.getElementById('habitDate').addEventListener('change', refreshHabitsUI);
     document.getElementById('measureDate').addEventListener('change', prefillMeasurements);
-    renderSets();
     await tryRestoreSession();
 });
 
@@ -1363,7 +1394,7 @@ function isoToday() {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-const TABS = ['measurement', 'training', 'other'];
+const TABS = ['measurement', 'cardio', 'training', 'other'];
 let currentTab = 'measurement';
 
 function switchTab(tab) {
@@ -1497,6 +1528,7 @@ function boot() {
     loadProfileUI();
     prefillMeasurements();
     prefillCardio();
+    renderLastTrained();
     render();
     refreshSummary();
     renderCalorieChart();
@@ -2405,13 +2437,6 @@ function prefillCardio() {
     document.getElementById('cardioCalories').value = last.calories ?? '';
 }
 
-let strengthExerciseType = 'FBW';
-
-function selectStrengthExercise(btn) {
-    document.querySelectorAll('[data-ex]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    strengthExerciseType = btn.dataset.ex;
-}
 
 async function saveCardio() {
     const date     = document.getElementById('cardioDate').value;
@@ -2517,54 +2542,46 @@ function renderCardioChart() {
 }
 
 // ── Strength Training ─────────────────────────────────────────────────────
-let strengthSets = [{ weight: null, reps: null }];
+const BODY_PARTS = ['chest', 'back', 'shoulders', 'legs', 'biceps', 'triceps'];
+let selectedParts = new Set();
 
-function renderSets() {
-    const list = document.getElementById('setList');
-    if (!list) return;
-    list.innerHTML = strengthSets.map((s, i) => `
-        <div class="set-row">
-            <span class="set-num">${i + 1}</span>
-            <input class="set-input set-weight" type="number" min="0" step="0.5" placeholder="kg"
-                value="${s.weight ?? ''}" oninput="strengthSets[${i}].weight = parseFloat(this.value)||null">
-            <span class="set-x">×</span>
-            <input class="set-input set-reps" type="number" min="1" step="1" placeholder="reps"
-                value="${s.reps ?? ''}" oninput="strengthSets[${i}].reps = parseInt(this.value)||null">
-            ${strengthSets.length > 1
-                ? `<button class="set-remove" onclick="removeSet(${i})" title="Remove">×</button>`
-                : '<span style="width:20px"></span>'}
-        </div>`).join('');
-}
-
-function addSet() {
-    const last = strengthSets[strengthSets.length - 1];
-    strengthSets.push({ weight: last?.weight ?? null, reps: last?.reps ?? null });
-    renderSets();
-}
-
-function removeSet(i) {
-    strengthSets.splice(i, 1);
-    renderSets();
+function toggleBodyPart(btn) {
+    const part = btn.dataset.part;
+    if (selectedParts.has(part)) selectedParts.delete(part); else selectedParts.add(part);
+    btn.classList.toggle('active', selectedParts.has(part));
 }
 
 async function saveStrength() {
-    const date     = document.getElementById('strengthDate').value;
-    const exercise = strengthExerciseType;
-    const calories = toNum(document.getElementById('strengthCalories').value);
+    const date = document.getElementById('strengthDate').value;
     if (!date) { flash('Pick a date.', 'err'); return; }
-    const validSets = strengthSets.filter(s => s.weight != null && s.reps != null && s.reps > 0);
-    if (!validSets.length) { flash('Enter at least one complete set.', 'err'); return; }
+    if (!selectedParts.size) { flash('Pick at least one body part.', 'err'); return; }
+    const parts = BODY_PARTS.filter(p => selectedParts.has(p));
     if (!data._strength) data._strength = [];
-    data._strength.push({ id: Date.now(), date, exercise, sets: validSets, calories: calories || 0 });
+    data._strength.push({ id: Date.now(), date, parts });
     try {
         await write();
-        flash('Session logged!', 'ok');
-        document.getElementById('strengthCalories').value = '';
-        strengthSets = [{ weight: null, reps: null }];
-        renderSets();
-        renderStrengthChart();
-        renderProjectionChart();
+        flash('Session saved!', 'ok');
+        selectedParts.clear();
+        document.querySelectorAll('.part-btn').forEach(b => b.classList.remove('active'));
+        renderLastTrained();
     } catch(e) { flash('Save failed: ' + e.message, 'err'); }
+}
+
+function renderLastTrained() {
+    const el = document.getElementById('lastTrained');
+    if (!el) return;
+    const last = {};
+    (data._strength || []).forEach(s => (s.parts || []).forEach(p => {
+        if (!last[p] || s.date > last[p]) last[p] = s.date;
+    }));
+    const today = new Date(isoToday() + 'T00:00:00');
+    el.innerHTML = BODY_PARTS.map(p => {
+        const name = p[0].toUpperCase() + p.slice(1);
+        if (!last[p]) return `<div class="lt-item"><div class="lt-name">${name}</div><div class="lt-when never">—</div></div>`;
+        const days = Math.round((today - new Date(last[p] + 'T00:00:00')) / 86400000);
+        const when = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
+        return `<div class="lt-item"><div class="lt-name">${name}</div><div class="lt-when">${when}</div><div class="lt-date">${last[p]}</div></div>`;
+    }).join('');
 }
 
 let strengthChartRange = 3;
@@ -2579,7 +2596,7 @@ function setStrengthRange(months) {
 
 function renderStrengthChart() {
     const card     = document.getElementById('strengthChartCard');
-    const sessions = data._strength || [];
+    const sessions = (data._strength || []).filter(s => Array.isArray(s.sets) && s.exercise);
     card.style.display = sessions.length ? 'block' : 'none';
     if (!sessions.length) return;
 
