@@ -515,21 +515,6 @@
         }
         .set-add:hover { border-color: var(--blue); }
 
-        /* ── Chart exercise select ── */
-        .chart-select {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            font-size: 0.72rem;
-            font-family: inherit;
-            outline: none;
-            cursor: pointer;
-            max-width: 200px;
-        }
-        .chart-select option { background: #0c0c1a; }
-
         /* ── Goals card ── */
         .card-header {
             display: flex;
@@ -816,7 +801,6 @@
             .range-btns { flex-wrap: wrap; }
             .range-btn { padding: 0.24rem 0.55rem; font-size: 0.58rem; }
             .chart-legend { flex-wrap: wrap; gap: 0.75rem 1.1rem; }
-            .chart-select { max-width: 140px; }
 
             .proj-stat { min-width: 78px; padding: 0.5rem 0.35rem; }
             .proj-stat-val { font-size: 0.9rem; }
@@ -1243,29 +1227,6 @@
             <div class="proj-disclaimer" id="projDisclaimer" style="display:none">Projection assumes current average intake &amp; activity remain constant. Estimates only.</div>
         </div>
 
-        <!-- Strength Progress chart (old set-based sessions) -->
-        <div class="card" id="strengthChartCard" style="display:none">
-            <div class="chart-header">
-                <div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:0">
-                    <div class="card-label" style="margin-bottom:0;flex-shrink:0">Strength Progress</div>
-                    <select id="strengthExerciseChart" class="chart-select" onchange="renderStrengthChart()">
-                        <option value="">— select —</option>
-                    </select>
-                </div>
-                <div class="range-btns" style="flex-shrink:0">
-                    <button class="range-btn active" data-sr="1"  onclick="setStrengthRange(1)">1M</button>
-                    <button class="range-btn"         data-sr="3"  onclick="setStrengthRange(3)">3M</button>
-                    <button class="range-btn"         data-sr="6"  onclick="setStrengthRange(6)">6M</button>
-                    <button class="range-btn"         data-sr="12" onclick="setStrengthRange(12)">1Y</button>
-                </div>
-            </div>
-            <svg id="strengthChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
-            <div class="chart-legend">
-                <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Est. 1RM (kg)</div>
-                <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div>Best weight (kg)</div>
-            </div>
-        </div>
-
         <!-- History -->
         <div class="card">
             <div class="card-label">History</div>
@@ -1535,7 +1496,6 @@ function boot() {
     renderChart();
     renderProjectionChart();
     renderCardioChart();
-    renderStrengthChart();
     refreshHabitsUI();
     renderStreaks();
     renderHabitHistory();
@@ -2582,124 +2542,6 @@ function renderLastTrained() {
         const when = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
         return `<div class="lt-item"><div class="lt-name">${name}</div><div class="lt-when">${when}</div><div class="lt-date">${last[p]}</div></div>`;
     }).join('');
-}
-
-let strengthChartRange = 3;
-
-function setStrengthRange(months) {
-    strengthChartRange = months;
-    document.querySelectorAll('#strengthChartCard .range-btn').forEach(b =>
-        b.classList.toggle('active', +b.dataset.sr === months)
-    );
-    renderStrengthChart();
-}
-
-function renderStrengthChart() {
-    const card     = document.getElementById('strengthChartCard');
-    const sessions = (data._strength || []).filter(s => Array.isArray(s.sets) && s.exercise);
-    card.style.display = sessions.length ? 'block' : 'none';
-    if (!sessions.length) return;
-
-    const sel       = document.getElementById('strengthExerciseChart');
-    const exercises = [...new Set(sessions.map(s => s.exercise))].sort();
-
-    // Rebuild dropdown if exercise list changed
-    const current = sel.value;
-    sel.innerHTML = exercises.map(e => `<option value="${e}">${e}</option>`).join('');
-    sel.value = exercises.includes(current) ? current : exercises[0];
-
-    const exercise = sel.value;
-    if (!exercise) return;
-
-    const cutoff = new Date();
-    cutoff.setMonth(cutoff.getMonth() - strengthChartRange);
-    const cutoffISO = toISODate(cutoff);
-
-    // Best 1RM and best weight per date for selected exercise
-    const byDate = {};
-    sessions
-        .filter(s => s.exercise === exercise && s.date >= cutoffISO)
-        .forEach(s => {
-            s.sets.forEach(set => {
-                const oneRM = set.weight * (1 + set.reps / 30);
-                if (!byDate[s.date]) byDate[s.date] = { oneRM: 0, best: 0 };
-                if (oneRM > byDate[s.date].oneRM)      byDate[s.date].oneRM = oneRM;
-                if (set.weight > byDate[s.date].best)  byDate[s.date].best  = set.weight;
-            });
-        });
-
-    const pts = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b));
-    const svg = document.getElementById('strengthChart');
-
-    if (!pts.length) {
-        svg.innerHTML = `<text x="340" y="100" text-anchor="middle" fill="#484868" font-size="11"
-            font-family="'Segoe UI',sans-serif">No ${exercise} data in this range.</text>`;
-        return;
-    }
-
-    const W = 680, H = 200, PL = 52, PR = 20, PT = 14, PB = 34;
-    const CW = W - PL - PR, CH = H - PT - PB;
-
-    const allVals = pts.flatMap(([, v]) => [v.oneRM, v.best]);
-    let yMin = Math.min(...allVals), yMax = Math.max(...allVals);
-    if (yMin === yMax) { yMin -= 5; yMax += 5; }
-    const yPad = (yMax - yMin) * 0.18; yMin -= yPad; yMax += yPad;
-    const yOf = v => PT + (1 - (v - yMin) / (yMax - yMin)) * CH;
-
-    const tMin = new Date(pts[0][0]).getTime();
-    const tMax = new Date(pts[pts.length-1][0]).getTime();
-    const tSpan = tMax - tMin || 1;
-    const xOf = d => PL + ((new Date(d).getTime() - tMin) / tSpan) * CW;
-
-    let out = '';
-
-    // Grid + Y labels
-    for (let i = 0; i <= 4; i++) {
-        const y = PT + (i / 4) * CH;
-        const v = yMax - (i / 4) * (yMax - yMin);
-        out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#111128" stroke-width="1"/>`;
-        out += `<text x="${PL-7}" y="${y+4}" text-anchor="end" fill="#484868" font-size="9"
-            font-family="'Segoe UI',sans-serif">${v.toFixed(1)}</text>`;
-    }
-
-    // X labels
-    sampleIndices(pts.length, 7).forEach(i => {
-        const x = xOf(pts[i][0]);
-        out += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}" stroke="#0f0f1e" stroke-width="1"/>`;
-        out += `<text x="${x}" y="${H-PB+16}" text-anchor="middle" fill="#484868" font-size="9"
-            font-family="'Segoe UI',sans-serif">${fmtDateLabel(pts[i][0], strengthChartRange)}</text>`;
-    });
-
-    // Best weight (dashed, muted)
-    const bestCoords = pts.map(([d, v]) => ({ x: xOf(d), y: yOf(v.best) }));
-    if (bestCoords.length >= 2)
-        out += `<path d="${curvePath(bestCoords)}" fill="none" stroke="#484868"
-            stroke-width="1.25" stroke-dasharray="5,4" stroke-linecap="round" opacity="0.6"/>`;
-    bestCoords.forEach(p =>
-        out += `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="#484868" stroke="#07070e" stroke-width="1.5"/>`
-    );
-
-    // Estimated 1RM (solid, blue)
-    const oneRMCoords = pts.map(([d, v]) => ({ x: xOf(d), y: yOf(v.oneRM) }));
-    if (oneRMCoords.length >= 2)
-        out += `<path d="${curvePath(oneRMCoords)}" fill="none" stroke="var(--blue)"
-            stroke-width="1.75" stroke-linecap="round"/>`;
-    oneRMCoords.forEach(p =>
-        out += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="var(--blue)" stroke="#07070e" stroke-width="1.5"/>`
-    );
-
-    // PR marker on peak 1RM
-    const peakVal = Math.max(...pts.map(([, v]) => v.oneRM));
-    const peakIdx = pts.findIndex(([, v]) => v.oneRM === peakVal);
-    if (peakIdx >= 0) {
-        const px = oneRMCoords[peakIdx].x, py = oneRMCoords[peakIdx].y;
-        out += `<circle cx="${px}" cy="${py}" r="5.5" fill="none" stroke="var(--blue)" stroke-width="1" opacity="0.45"/>`;
-        out += `<text x="${px}" y="${py > PT + 20 ? py - 10 : py + 19}" text-anchor="middle"
-            fill="var(--blue)" font-size="8.5" font-weight="700"
-            font-family="'Segoe UI',sans-serif">PR ${peakVal.toFixed(1)}</text>`;
-    }
-
-    svg.innerHTML = out;
 }
 
 // ── Weight Projection ─────────────────────────────────────────────────────
