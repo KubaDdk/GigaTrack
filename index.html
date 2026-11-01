@@ -169,6 +169,14 @@
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
+        .last-session {
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin: 0.2rem 0 0.9rem;
+            line-height: 1.5;
+        }
+        .last-session:empty { display: none; }
+        .last-session b { color: var(--text); font-weight: 600; }
         .step-btn:hover  { border-color: var(--blue); }
         .step-btn:active { background: #1a1a2e; }
 
@@ -899,14 +907,21 @@
                         <button class="type-pill"        data-type="other"  onclick="selectCardioType(this)">Other</button>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
-                    <div class="field">
-                        <label>Duration (min)</label>
-                        <input type="number" id="cardioDuration" min="0" step="1" placeholder="0">
+                <div class="last-session" id="cardioLast"></div>
+                <div class="field">
+                    <label>Duration (min)</label>
+                    <div class="stepper">
+                        <button type="button" class="step-btn" onclick="stepMeasure('cardioDuration', -1, 0)" aria-label="Decrease duration">▼</button>
+                        <input type="number" id="cardioDuration" min="0" step="1" inputmode="numeric" placeholder="0">
+                        <button type="button" class="step-btn" onclick="stepMeasure('cardioDuration', 1, 0)" aria-label="Increase duration">▲</button>
                     </div>
-                    <div class="field">
-                        <label>Calories burned</label>
-                        <input type="number" id="cardioCalories" min="0" step="1" placeholder="0">
+                </div>
+                <div class="field">
+                    <label>Calories burned</label>
+                    <div class="stepper">
+                        <button type="button" class="step-btn" onclick="stepMeasure('cardioCalories', -1, 0)" aria-label="Decrease calories">▼</button>
+                        <input type="number" id="cardioCalories" min="0" step="1" inputmode="numeric" placeholder="0">
+                        <button type="button" class="step-btn" onclick="stepMeasure('cardioCalories', 1, 0)" aria-label="Increase calories">▲</button>
                     </div>
                 </div>
                 <button class="btn btn-primary" onclick="saveCardio()">Log Session</button>
@@ -1481,6 +1496,7 @@ function boot() {
     loadGoalsUI();
     loadProfileUI();
     prefillMeasurements();
+    prefillCardio();
     render();
     refreshSummary();
     renderCalorieChart();
@@ -1552,11 +1568,12 @@ function prefillMeasurements() {
     document.getElementById('waistInput').value  = latestMeasure('waist',  date) ?? '';
 }
 
-function stepMeasure(id, delta) {
+function stepMeasure(id, delta, decimals = 1) {
     const el  = document.getElementById(id);
     const cur = parseFloat(el.value);
     const base = isNaN(cur) ? 0 : cur;
-    el.value = Math.max(0, Math.round((base + delta) * 10) / 10).toFixed(1);
+    const f = 10 ** decimals;
+    el.value = Math.max(0, Math.round((base + delta) * f) / f).toFixed(decimals);
 }
 
 function refreshSummary() {
@@ -2361,6 +2378,31 @@ function selectCardioType(btn) {
     document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     cardioType = btn.dataset.type;
+    prefillCardio();
+}
+
+// Most recent cardio session, preferring the currently selected type.
+function lastCardioSession(type) {
+    const list = (data._cardio || []).slice()
+        .sort((a, b) => (a.date === b.date ? a.id - b.id : a.date < b.date ? -1 : 1));
+    const ofType = list.filter(s => s.type === type);
+    return ofType.length ? ofType[ofType.length - 1] : (list[list.length - 1] || null);
+}
+
+function prefillCardio() {
+    const last = lastCardioSession(cardioType);
+    const info = document.getElementById('cardioLast');
+    if (!last) {
+        info.innerHTML = '';
+        document.getElementById('cardioDuration').value = '';
+        document.getElementById('cardioCalories').value = '';
+        return;
+    }
+    const typeName = last.type ? last.type[0].toUpperCase() + last.type.slice(1) : 'Session';
+    info.innerHTML = `Previous session · ${last.date} · ${typeName}: ` +
+        `<b>${last.duration ?? 0} min</b> · <b>${last.calories ?? 0} kcal</b>`;
+    document.getElementById('cardioDuration').value = last.duration ?? '';
+    document.getElementById('cardioCalories').value = last.calories ?? '';
 }
 
 let strengthExerciseType = 'FBW';
@@ -2381,8 +2423,7 @@ async function saveCardio() {
     try {
         await write();
         flash('Session logged!', 'ok');
-        document.getElementById('cardioDuration').value = '';
-        document.getElementById('cardioCalories').value = '';
+        prefillCardio();
         renderCardioChart();
         renderProjectionChart();
     } catch (e) {
