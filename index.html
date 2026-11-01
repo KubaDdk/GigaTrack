@@ -197,6 +197,27 @@
         .lt-when { font-size: 0.95rem; color: var(--text); margin-top: 0.2rem; }
         .lt-when.never { color: var(--muted); }
         .lt-date { font-size: 0.62rem; color: var(--muted); }
+        .check-grid { display: grid; gap: 0.5rem; }
+        .check-grid.five { grid-template-columns: repeat(5, 1fr); }
+        .check-grid.two  { grid-template-columns: repeat(2, 1fr); }
+        .check-btn {
+            padding: 0.95rem 0.4rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.15s;
+        }
+        .check-btn.wide { width: 100%; }
+        .check-btn.done { border-color: var(--green); color: var(--green); background: rgba(74,222,128,.09); }
+        .check-btn.done::before { content: '✓ '; }
+        .daily-count { color: var(--muted); font-weight: 400; letter-spacing: 1px; margin-left: 0.4rem; }
         .last-session {
             font-size: 0.72rem;
             color: var(--muted);
@@ -843,6 +864,7 @@
             <button class="tab-btn active" data-tab="measurement" onclick="switchTab('measurement')">Measurement</button>
             <button class="tab-btn" data-tab="cardio" onclick="switchTab('cardio')">Cardio</button>
             <button class="tab-btn" data-tab="training" onclick="switchTab('training')">Training</button>
+            <button class="tab-btn" data-tab="habits" onclick="switchTab('habits')">Habits</button>
             <button class="tab-btn" data-tab="other" onclick="switchTab('other')">Other</button>
         </div>
 
@@ -992,6 +1014,51 @@
         </div>
 
         </div><!-- end #trainingTab -->
+
+        <!-- Habits tab -->
+        <div id="habitsTab" style="display:none">
+
+        <div class="card">
+            <div class="field" style="margin-bottom:0">
+                <label>Date</label>
+                <input type="date" id="dailyDate">
+            </div>
+        </div>
+
+        <!-- Water -->
+        <div class="card">
+            <div class="card-label">💧 Water <span class="daily-count" id="glassCount"></span></div>
+            <div class="check-grid five" id="glassChecks">
+                <button type="button" class="check-btn" data-i="0" onclick="toggleDaily('glasses', 5, this)">1</button>
+                <button type="button" class="check-btn" data-i="1" onclick="toggleDaily('glasses', 5, this)">2</button>
+                <button type="button" class="check-btn" data-i="2" onclick="toggleDaily('glasses', 5, this)">3</button>
+                <button type="button" class="check-btn" data-i="3" onclick="toggleDaily('glasses', 5, this)">4</button>
+                <button type="button" class="check-btn" data-i="4" onclick="toggleDaily('glasses', 5, this)">5</button>
+            </div>
+        </div>
+
+        <!-- Money -->
+        <div class="card">
+            <div class="card-label">💰 Money</div>
+            <button type="button" class="check-btn wide" id="noSpendBtn" onclick="toggleNoSpend()">Nothing spent today</button>
+            <div class="field" style="margin:0.9rem 0 0">
+                <label>Spent (€)</label>
+                <input type="number" id="spentInput" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+            </div>
+        </div>
+
+        <!-- Meals -->
+        <div class="card">
+            <div class="card-label">🍽️ Meals <span class="daily-count" id="mealCount"></span></div>
+            <div class="check-grid two" id="mealChecks">
+                <button type="button" class="check-btn" data-i="0" onclick="toggleDaily('meals', 4, this)">Breakfast</button>
+                <button type="button" class="check-btn" data-i="1" onclick="toggleDaily('meals', 4, this)">2nd breakfast</button>
+                <button type="button" class="check-btn" data-i="2" onclick="toggleDaily('meals', 4, this)">Lunch</button>
+                <button type="button" class="check-btn" data-i="3" onclick="toggleDaily('meals', 4, this)">Dinner</button>
+            </div>
+        </div>
+
+        </div><!-- end #habitsTab -->
 
         <!-- Other tab (temporary home for everything else) -->
         <div id="otherTab" style="display:none">
@@ -1341,6 +1408,9 @@ addEventListener('DOMContentLoaded', async () => {
     document.getElementById('entryDate').addEventListener('change', refreshSummary);
     document.getElementById('habitDate').addEventListener('change', refreshHabitsUI);
     document.getElementById('measureDate').addEventListener('change', prefillMeasurements);
+    document.getElementById('dailyDate').value = isoToday();
+    document.getElementById('dailyDate').addEventListener('change', renderDailyHabits);
+    document.getElementById('spentInput').addEventListener('change', saveSpent);
     await tryRestoreSession();
 });
 
@@ -1355,7 +1425,7 @@ function isoToday() {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-const TABS = ['measurement', 'cardio', 'training', 'other'];
+const TABS = ['measurement', 'cardio', 'training', 'habits', 'other'];
 let currentTab = 'measurement';
 
 function switchTab(tab) {
@@ -1490,6 +1560,7 @@ function boot() {
     prefillMeasurements();
     prefillCardio();
     renderLastTrained();
+    renderDailyHabits();
     render();
     refreshSummary();
     renderCalorieChart();
@@ -2004,6 +2075,7 @@ async function toggleNoSpendHabit() {
     if (!date) return;
     const done = document.getElementById('noSpendHabitCheck').checked;
     data[date] = { ...(data[date] || {}), habits: { ...(data[date]?.habits || {}), noSpend: done } };
+    renderDailyHabits();
     await saveHabitsData();
 }
 
@@ -2499,6 +2571,57 @@ function renderCardioChart() {
     });
 
     svg.innerHTML = out;
+}
+
+// ── Daily habits (Habits tab) ─────────────────────────────────────────────
+function dailyHabits(date) {
+    return (data[date] && data[date].habits) || {};
+}
+
+async function setDailyHabit(date, patch) {
+    data[date] = { ...(data[date] || {}), habits: { ...dailyHabits(date), ...patch } };
+    renderDailyHabits();
+    await saveHabitsData();
+    refreshHabitsUI();
+}
+
+function toggleDaily(key, n, btn) {
+    const date = document.getElementById('dailyDate').value;
+    if (!date) return;
+    const arr = Array.from({ length: n }, (_, i) => !!(dailyHabits(date)[key] || [])[i]);
+    const i = +btn.dataset.i;
+    arr[i] = !arr[i];
+    setDailyHabit(date, { [key]: arr });
+}
+
+function toggleNoSpend() {
+    const date = document.getElementById('dailyDate').value;
+    if (!date) return;
+    const on = !dailyHabits(date).noSpend;
+    setDailyHabit(date, on ? { noSpend: true, spent: null } : { noSpend: false });
+}
+
+function saveSpent() {
+    const date = document.getElementById('dailyDate').value;
+    if (!date) return;
+    const v = parseFloat(document.getElementById('spentInput').value);
+    const spent = isNaN(v) || v <= 0 ? null : Math.round(v * 100) / 100;
+    setDailyHabit(date, spent != null ? { spent, noSpend: false } : { spent: null });
+}
+
+function renderDailyHabits() {
+    const date = document.getElementById('dailyDate').value;
+    const h = dailyHabits(date);
+    const fill = (id, key, n, countId) => {
+        const arr = h[key] || [];
+        document.querySelectorAll(`#${id} .check-btn`).forEach(b => b.classList.toggle('done', !!arr[+b.dataset.i]));
+        document.getElementById(countId).textContent = `${arr.filter(Boolean).length}/${n}`;
+    };
+    fill('glassChecks', 'glasses', 5, 'glassCount');
+    fill('mealChecks', 'meals', 4, 'mealCount');
+    document.getElementById('noSpendBtn').classList.toggle('done', !!h.noSpend);
+    const inp = document.getElementById('spentInput');
+    if (document.activeElement !== inp) inp.value = h.spent != null ? h.spent : '';
 }
 
 // ── Strength Training ─────────────────────────────────────────────────────
