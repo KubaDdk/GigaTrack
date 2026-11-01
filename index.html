@@ -838,7 +838,6 @@
         .tab-btn.complete::after { content: ' ✓'; }
         .tab-btn.complete.active { background: var(--active-bg); box-shadow: 0 0 0 1px var(--green) inset; }
 
-        /* ── Weekly Overview ── */
         /* ── Week tab ── */
         .wk-rings-wrap { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
         .wk-rings { width: 220px; height: 220px; flex: 0 0 auto; }
@@ -865,37 +864,6 @@
         .wk-item .wk-sub { color: var(--muted); }
         .wk-empty { font-size: 0.8rem; color: var(--muted); }
 
-        .week-table { width: 100%; border-collapse: collapse; }
-        .week-table th, .week-table td { text-align: center; padding: 0.55rem 0.3rem; }
-        .week-table th {
-            font-size: 0.56rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--muted);
-            border-bottom: 1px solid var(--border);
-        }
-        .week-table th.today { color: var(--blue); }
-        .week-date { display: block; font-size: 0.58rem; color: var(--muted); font-weight: 400; margin-top: 0.15rem; letter-spacing: 0; text-transform: none; }
-        .week-table td.week-habit-label {
-            text-align: left;
-            font-size: 0.8rem;
-            color: var(--text);
-            white-space: nowrap;
-            padding-right: 0.9rem;
-        }
-        .week-table tbody td { border-bottom: 1px solid var(--row-line); }
-        .week-table tbody tr:last-child td { border-bottom: none; }
-        .week-cell { font-size: 1rem; }
-        .week-cell.done    { color: var(--green); }
-        .week-cell.missed  { color: var(--muted); }
-        .week-cell.partial, .habit-cell.partial { color: var(--gold); font-size: 0.78rem; }
-        .week-cell.spent,   .habit-cell.spent   { color: #f87171; font-size: 0.72rem; white-space: nowrap; }
-        .habit-cell.done   { color: var(--green); }
-        .habit-cell.missed { color: var(--muted); }
-        .week-cell.na       { color: var(--muted); opacity: 0.25; }
-        .week-cell.future   { color: var(--muted); opacity: 0.25; }
-        .week-table td.today-col, .week-table th.today { background: rgba(91,143,255,0.06); }
 
         /* ── Scrollbar ── */
         ::-webkit-scrollbar { width: 6px; }
@@ -1460,29 +1428,6 @@
             <div id="histContainer" style="overflow-x:auto"><div class="empty">No entries yet.</div></div>
         </div>
 
-        <!-- Habits overview (data from the Habits tab) -->
-            <!-- Weekly Overview -->
-            <div class="card">
-                <div class="chart-header">
-                    <div class="card-label" style="margin-bottom:0">Weekly Overview</div>
-                    <div class="range-btns">
-                        <button class="range-btn" onclick="shiftHabitWeek(-1)">‹ Prev</button>
-                        <button class="range-btn" onclick="resetHabitWeek()">This Week</button>
-                        <button class="range-btn" onclick="shiftHabitWeek(1)">Next ›</button>
-                    </div>
-                </div>
-                <div class="goals-summary" id="weekRangeLabel" style="text-align:center;margin-bottom:0.9rem"></div>
-                <div style="overflow-x:auto">
-                    <table class="week-table" id="weekTable"></table>
-                </div>
-            </div>
-
-            <!-- Habit History -->
-            <div class="card">
-                <div class="card-label">Habit History</div>
-                <div id="habitHistContainer" style="overflow-x:auto"><div class="empty">No habit data yet.</div></div>
-            </div>
-
         </div><!-- end #otherTab -->
 
     </div>
@@ -1952,8 +1897,6 @@ function boot() {
     renderChart();
     renderProjectionChart();
     renderCardioChart();
-    renderHabitHistory();
-    renderWeekOverview();
     updateTabBadges();
 }
 
@@ -2236,29 +2179,6 @@ const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const countTrue = arr => (arr || []).filter(Boolean).length;
 const fmtEur = v => '€' + (Math.round(v * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
 
-// Each row: status(date) -> { cls: 'done' | 'partial' | 'missed' | 'spent', text }
-const HABIT_ROWS = [
-    { icon: '💧', label: 'Water', status: d => {
-        const n = countTrue(dailyHabits(d).glasses);
-        return n >= 5 ? { cls: 'done', text: '✓' } : n > 0 ? { cls: 'partial', text: `${n}/5` } : { cls: 'missed', text: '—' };
-    }},
-    { icon: '💰', label: 'Money', status: d => {
-        const h = dailyHabits(d);
-        if (h.noSpend)       return { cls: 'done',  text: '✓' };
-        if (h.spent != null) return { cls: 'spent', text: fmtEur(h.spent) };
-        return { cls: 'missed', text: '—' };
-    }},
-    { icon: '🍽️', label: 'Meals', status: d => {
-        const n = countTrue(dailyHabits(d).meals);
-        return n >= 4 ? { cls: 'done', text: '✓' } : n > 0 ? { cls: 'partial', text: `${n}/4` } : { cls: 'missed', text: '—' };
-    }},
-];
-
-function hasDailyHabitData(date) {
-    const h = dailyHabits(date);
-    return countTrue(h.glasses) > 0 || countTrue(h.meals) > 0 || !!h.noSpend || h.spent != null;
-}
-
 async function saveHabitsData(msg = 'Saved') {
     try {
         await write();
@@ -2267,103 +2187,6 @@ async function saveHabitsData(msg = 'Saved') {
         return;
     }
     flash(msg, 'ok');
-    renderHabitHistory();
-    renderWeekOverview();
-}
-
-// ── Habits: combined history ─────────────────────────────────────────────
-function renderHabitHistory() {
-    const container = document.getElementById('habitHistContainer');
-    const today     = isoToday();
-    const dates     = Object.keys(data)
-        .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && hasDailyHabitData(k))
-        .sort((a, b) => b.localeCompare(a));
-
-    if (!dates.length) {
-        container.innerHTML = '<div class="empty">No habit data yet.</div>';
-        return;
-    }
-
-    const rows = dates.map(date => {
-        const dateCls = date === today ? 'c-date today' : 'c-date';
-        const dayName = DAY_NAMES[new Date(date + 'T00:00:00').getDay()];
-        const cells   = HABIT_ROWS.map(h => {
-            const st = h.status(date);
-            return `<td class="habit-cell ${st.cls}">${st.text}</td>`;
-        }).join('');
-        return `<tr onclick="openHabitDate('${date}')" style="cursor:pointer">
-            <td class="${dateCls}">${date}${date === today ? ' ·today' : ''} <span style="color:var(--muted)">${dayName}</span></td>
-            ${cells}
-        </tr>`;
-    }).join('');
-
-    const headCells = HABIT_ROWS.map(h => `<th title="${h.label}">${h.icon} ${h.label}</th>`).join('');
-
-    container.innerHTML = `
-        <table class="hist-table">
-            <thead><tr><th>Date</th>${headCells}</tr></thead>
-            <tbody>${rows}</tbody>
-        </table>`;
-}
-
-// Jump to the Habits tab for a given day.
-function openHabitDate(date) {
-    setSelectedDate(date);
-    switchTab('habits');
-    scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ── Weekly Overview ──────────────────────────────────────────────────────
-let habitWeekOffset = 0;
-
-function shiftHabitWeek(delta) {
-    habitWeekOffset += delta;
-    renderWeekOverview();
-}
-
-function resetHabitWeek() {
-    habitWeekOffset = 0;
-    renderWeekOverview();
-}
-
-function getWeekDates(offsetWeeks) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const day = today.getDay();
-    const diffToMonday = day === 0 ? -6 : 1 - day;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + diffToMonday + offsetWeeks * 7);
-    return Array.from({ length: 7 }, (_, i) => {
-        const dt = new Date(monday);
-        dt.setDate(monday.getDate() + i);
-        return toISODate(dt);
-    });
-}
-
-const WEEK_DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-function renderWeekOverview() {
-    const dates = getWeekDates(habitWeekOffset);
-    const today = isoToday();
-
-    const rangeLabel = `${fmtDateLabel(dates[0], 1)} – ${fmtDateLabel(dates[6], 1)}` +
-        (habitWeekOffset === 0 ? ' · This Week' : '');
-    document.getElementById('weekRangeLabel').textContent = rangeLabel;
-
-    const head = '<thead><tr><th></th>' + dates.map((d, i) => {
-        const dt = new Date(d + 'T00:00:00');
-        return `<th class="${d === today ? 'today' : ''}">${WEEK_DAY_LABELS[i]}<span class="week-date">${dt.getMonth() + 1}/${dt.getDate()}</span></th>`;
-    }).join('') + '</tr></thead>';
-
-    const body = '<tbody>' + HABIT_ROWS.map(h => {
-        const cells = dates.map(d => {
-            const st = d > today ? { cls: 'future', text: '·' } : h.status(d);
-            return `<td class="week-cell ${st.cls}${d === today ? ' today-col' : ''}" onclick="openHabitDate('${d}')" style="cursor:pointer">${st.text}</td>`;
-        }).join('');
-        return `<tr><td class="week-habit-label">${h.icon} ${h.label}</td>${cells}</tr>`;
-    }).join('') + '</tbody>';
-
-    document.getElementById('weekTable').innerHTML = head + body;
 }
 
 // ── Weight & Waist Chart ───────────────────────────────────────────────────
