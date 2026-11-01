@@ -1092,7 +1092,7 @@
             <div class="chart-header">
                 <div class="card-label" style="margin-bottom:0">Training Frequency</div>
                 <div class="range-btns">
-                    <button class="range-btn active" data-tr="7"  onclick="setTrainRange(7)">7D</button>
+                    <button class="range-btn active" data-tr="7"  onclick="setTrainRange(7)">Week</button>
                     <button class="range-btn"        data-tr="30" onclick="setTrainRange(30)">30D</button>
                     <button class="range-btn"        data-tr="91" onclick="setTrainRange(91)">3M</button>
                 </div>
@@ -2710,6 +2710,7 @@ let trainResizeT;
 addEventListener('resize', () => { clearTimeout(trainResizeT); trainResizeT = setTimeout(renderTrainingChart, 150); });
 // 7D / 30D: one bar per day. 3M: one bar per week (Mon–Sun).
 let trainRange = 7;
+const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function setTrainRange(days) {
     trainRange = days;
@@ -2722,11 +2723,18 @@ function renderTrainingChart() {
     const svg = document.getElementById('trainChart');
     if (!svg) return;
 
-    // Last N days, today included
+    // Weeks start on Monday.
+    //  7D → this week, Mon–Sun.  30D → last 30 days.  3M → last 13 full weeks, Mon–Sun.
     const days = [];
-    for (let i = trainRange - 1; i >= 0; i--) {
-        const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
-        days.push(toISODate(d));
+    if (trainRange === 30) {
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
+            days.push(toISODate(d));
+        }
+    } else {
+        const weeks = trainRange === 7 ? 1 : 13;
+        const [y, m, dd] = weekDatesFor(isoToday())[0].split('-').map(Number);
+        for (let i = -(weeks - 1) * 7; i < 7; i++) days.push(toISODate(new Date(y, m - 1, dd + i)));
     }
     const first = days[0], last = days[days.length - 1];
     const sessions = (data._strength || []).filter(s => s.date >= first && s.date <= last);
@@ -2734,10 +2742,10 @@ function renderTrainingChart() {
     sessions.forEach(s => { (perDay[s.date] = perDay[s.date] || []).push(s); });
 
     const total   = sessions.length;
-    const avgWeek = total / (trainRange / 7);
+    const avgWeek = total / (days.length / 7);
     document.getElementById('trStatTotal').textContent = total;
     document.getElementById('trStatAvg').textContent   = (Math.round(avgWeek * 10) / 10).toString();
-    document.getElementById('trStatDays').textContent  = `${Object.keys(perDay).length}/${trainRange}`;
+    document.getElementById('trStatDays').textContent  = `${Object.keys(perDay).length}/${days.length}`;
 
     // Buckets
     const cap = p => p[0].toUpperCase() + p.slice(1);
@@ -2746,7 +2754,7 @@ function renderTrainingChart() {
         buckets = days.map(d => {
             const list = perDay[d] || [];
             const parts = [...new Set(list.flatMap(s => s.parts || []))].map(cap).join(', ');
-            return { label: fmtDateLabel(d, 1), n: list.length,
+            return { label: trainRange === 7 ? WEEKDAY_SHORT[new Date(d + 'T00:00:00').getDay()] : fmtDateLabel(d, 1), n: list.length,
                      tip: `${d}: ${list.length} session${list.length === 1 ? '' : 's'}${parts ? ' · ' + parts : ''}` };
         });
     } else {
