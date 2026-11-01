@@ -809,6 +809,11 @@
             padding: 2px;
         }
         .tabs::-webkit-scrollbar { display: none; }
+        /* Wider screens: wrap the tabs onto two rows instead of scrolling */
+        @media (min-width: 641px) {
+            .tabs { flex-wrap: wrap; justify-content: center; overflow-x: visible; gap: 0.4rem; }
+            .tabs .tab-btn { padding: 0.5rem 0.85rem; letter-spacing: 1.2px; }
+        }
         .tab-btn {
             padding: 0.5rem 1.4rem;
             border-radius: 8px;
@@ -948,17 +953,19 @@
     <div id="mainApp" style="display:none">
 
         <div class="tabs">
-            <button class="tab-btn active" data-tab="measurement" onclick="switchTab('measurement')">Measurement</button>
+            <button class="tab-btn active" data-tab="day" onclick="switchTab('day')" id="dayTabBtn">Today</button>
+            <button class="tab-btn" data-tab="measurement" onclick="switchTab('measurement')">Measurement</button>
             <button class="tab-btn" data-tab="cardio" onclick="switchTab('cardio')">Cardio</button>
             <button class="tab-btn" data-tab="training" onclick="switchTab('training')">Training</button>
             <button class="tab-btn" data-tab="habits" onclick="switchTab('habits')">Habits</button>
-            <button class="tab-btn" data-tab="other" onclick="switchTab('other')">Other</button>
-            <button class="tab-btn" data-tab="day" onclick="switchTab('day')" id="dayTabBtn">Today</button>
+            <button class="tab-btn" data-tab="food" onclick="switchTab('food')">Food</button>
+            <button class="tab-btn" data-tab="projection" onclick="switchTab('projection')">Projection</button>
             <button class="tab-btn" data-tab="week" onclick="switchTab('week')">Week</button>
+            <button class="tab-btn" data-tab="other" onclick="switchTab('other')">Other</button>
         </div>
 
         <!-- Measurement tab -->
-        <div id="measurementTab">
+        <div id="measurementTab" style="display:none">
 
         <!-- Body Measurements -->
         <div class="card">
@@ -1152,7 +1159,7 @@
         </div><!-- end #habitsTab -->
 
         <!-- Day tab: everything logged on the selected date -->
-        <div id="dayTab" style="display:none">
+        <div id="dayTab">
 
         <div class="card">
             <div class="chart-header">
@@ -1201,10 +1208,9 @@
 
         </div><!-- end #weekTab -->
 
-        <!-- Other tab (temporary home for everything else) -->
-        <div id="otherTab" style="display:none">
+        <!-- Food tab -->
+        <div id="foodTab" style="display:none">
 
-        <div class="top-row">
         <!-- Food Entry -->
         <div class="card">
             <div class="card-label">Food Entry</div>
@@ -1226,104 +1232,6 @@
             <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
         </div>
 
-        <!-- Goals card -->
-        <div class="card" id="goalsCard" style="display:none;margin-bottom:0">
-            <div class="card-header" onclick="toggleGoals()">
-                <div>
-                    <div class="card-label">Daily Goals</div>
-                    <div class="goals-summary" id="goalsSummary"></div>
-                </div>
-                <div class="chevron" id="goalsChevron">▼</div>
-            </div>
-            <div class="collapsible" id="goalsBody">
-                <div class="collapsible-inner">
-                    <div class="macro-row">
-                        <div class="field">
-                            <label>Fat goal (g)</label>
-                            <input type="number" id="goalFat" min="0" step="1" placeholder="0">
-                        </div>
-                        <div class="field">
-                            <label>Carbs goal (g)</label>
-                            <input type="number" id="goalCarbs" min="0" step="1" placeholder="0">
-                        </div>
-                        <div class="field">
-                            <label>Protein goal (g)</label>
-                            <input type="number" id="goalProtein" min="0" step="1" placeholder="0">
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" onclick="saveGoals()">Save Goals</button>
-                </div>
-            </div>
-        </div>
-        </div><!-- end .top-row -->
-
-        <!-- Summary (visible when selected date has data) -->
-        <div class="card" id="summaryCard" style="display:none">
-            <div class="card-label" id="summaryLabel">Summary</div>
-
-            <div class="summary-layout">
-                <!-- Macro numbers -->
-                <div class="summary-macros">
-                    <div class="sm-item">
-                        <div class="sm-tag fat">Fat</div>
-                        <div class="sm-val fat" id="sFat">—</div>
-                        <div class="sm-unit">g</div>
-                        <div class="sm-progress" id="progFat" style="display:none">
-                            <div class="pb-track"><div class="pb-fill fat" id="pfFat"></div></div>
-                            <div class="pb-label" id="plFat"></div>
-                        </div>
-                    </div>
-                    <div class="sm-item">
-                        <div class="sm-tag carbs">Carbs</div>
-                        <div class="sm-val carbs" id="sCarbs">—</div>
-                        <div class="sm-unit">g</div>
-                        <div class="sm-progress" id="progCarbs" style="display:none">
-                            <div class="pb-track"><div class="pb-fill carbs" id="pfCarbs"></div></div>
-                            <div class="pb-label" id="plCarbs"></div>
-                        </div>
-                    </div>
-                    <div class="sm-item">
-                        <div class="sm-tag protein">Protein</div>
-                        <div class="sm-val protein" id="sProtein">—</div>
-                        <div class="sm-unit">g</div>
-                        <div class="sm-progress" id="progProtein" style="display:none">
-                            <div class="pb-track"><div class="pb-fill protein" id="pfProtein"></div></div>
-                            <div class="pb-label" id="plProtein"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Donut chart -->
-                <svg id="pieChart" viewBox="0 0 100 100" width="160" height="160" style="flex-shrink:0">
-                    <circle cx="50" cy="50" r="36" fill="none" stroke="var(--grid)" stroke-width="14"/>
-                    <circle id="pieFat"     cx="50" cy="50" r="36" fill="none" stroke="#f0b429" stroke-width="14"
-                            stroke-dasharray="0 226" stroke-linecap="butt"/>
-                    <circle id="pieCarbs"   cx="50" cy="50" r="36" fill="none" stroke="#5b8fff" stroke-width="14"
-                            stroke-dasharray="0 226" stroke-linecap="butt"/>
-                    <circle id="pieProtein" cx="50" cy="50" r="36" fill="none" stroke="#9b5fff" stroke-width="14"
-                            stroke-dasharray="0 226" stroke-linecap="butt"/>
-                    <text id="pieKcal" x="50" y="47" text-anchor="middle" fill="var(--text)"
-                          font-size="13" font-weight="200" font-family="'Segoe UI',system-ui,sans-serif">—</text>
-                    <text x="50" y="58" text-anchor="middle" fill="var(--muted)"
-                          font-size="6" letter-spacing="1.5" font-family="'Segoe UI',system-ui,sans-serif">KCAL</text>
-                </svg>
-            </div>
-
-            <!-- Measurements row (shown when weight/waist logged for this date) -->
-            <div class="meas-display" id="measDisplay" style="display:none">
-                <div class="meas-block">
-                    <div class="meas-lbl weight">Weight</div>
-                    <div class="meas-num weight" id="sWeight">—</div>
-                    <div class="meas-unt">kg</div>
-                </div>
-                <div class="meas-block">
-                    <div class="meas-lbl waist">Waist</div>
-                    <div class="meas-num waist" id="sWaist">—</div>
-                    <div class="meas-unt">cm</div>
-                </div>
-            </div>
-        </div>
-
         <!-- Calorie Intake chart -->
         <div class="card" id="calorieChartCard" style="display:none">
             <div class="chart-header">
@@ -1340,6 +1248,11 @@
             <svg id="calorieChart" viewBox="0 0 680 200" style="width:100%;height:auto;display:block;overflow:visible"></svg>
         </div>
 
+
+        </div><!-- end #foodTab -->
+
+        <!-- Projection tab -->
+        <div id="projectionTab" style="display:none">
 
         <!-- Weight Projection -->
         <div class="card" id="projCard" style="display:none">
@@ -1430,6 +1343,36 @@
                 </div>
             </div>
             <div class="proj-disclaimer" id="projDisclaimer" style="display:none">Projection assumes current average intake &amp; activity remain constant. Estimates only.</div>
+        </div>
+
+        </div><!-- end #projectionTab -->
+
+        <!-- Other tab -->
+        <div id="otherTab" style="display:none">
+
+        <!-- Goals card -->
+        <div class="card" id="goalsCard" style="display:none">
+            <div class="card-label" style="margin-bottom:0.4rem">Daily Goals</div>
+            <div class="goals-summary" id="goalsSummary" style="margin-bottom:1.2rem"></div>
+            <div>
+                <div>
+                    <div class="macro-row">
+                        <div class="field">
+                            <label>Fat goal (g)</label>
+                            <input type="number" id="goalFat" min="0" step="1" placeholder="0">
+                        </div>
+                        <div class="field">
+                            <label>Carbs goal (g)</label>
+                            <input type="number" id="goalCarbs" min="0" step="1" placeholder="0">
+                        </div>
+                        <div class="field">
+                            <label>Protein goal (g)</label>
+                            <input type="number" id="goalProtein" min="0" step="1" placeholder="0">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveGoals()">Save Goals</button>
+                </div>
+            </div>
         </div>
 
         <!-- History -->
@@ -1572,8 +1515,8 @@ function setTheme(theme) {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-const TABS = ['measurement', 'cardio', 'training', 'habits', 'other', 'day', 'week'];
-let currentTab = 'measurement';
+const TABS = ['day', 'measurement', 'cardio', 'training', 'habits', 'food', 'projection', 'week', 'other'];
+let currentTab = 'day';
 
 function switchTab(tab) {
     currentTab = tab;
@@ -1718,7 +1661,7 @@ const TAB_COMPLETE = {
         const h = dailyHabits(d);
         return countTrue(h.glasses) >= 5 && countTrue(h.meals) >= 4 && (!!h.noSpend || h.spent != null);
     },
-    other:       d => { const e = data[d] || {}; return e.fat != null || e.carbs != null || e.protein != null; },
+    food:        d => { const e = data[d] || {}; return e.fat != null || e.carbs != null || e.protein != null; },
 };
 
 function updateTabBadges() {
@@ -1739,7 +1682,7 @@ const WEEK_RINGS = [
     { key: 'cardio',      label: 'Cardio',       color: '#f97316' },
     { key: 'training',    label: 'Training',     color: '#9b5fff' },
     { key: 'habits',      label: 'Habits',       color: '#5b8fff' },
-    { key: 'other',       label: 'Food',         color: '#f0b429' },
+    { key: 'food',        label: 'Food',         color: '#f0b429' },
 ];
 
 // Habits get partial credit per day (water, meals, money each a third).
@@ -1839,7 +1782,7 @@ function renderDay() {
             const pct = habitDayScore(d);
             return { ...r, pct, text: `<b>${Math.round(pct * 100)}%</b>` };
         }
-        if (r.key === 'other' && goals && (e.fat != null || e.carbs != null || e.protein != null)) {
+        if (r.key === 'food' && goals && (e.fat != null || e.carbs != null || e.protein != null)) {
             // Food: calories eaten vs the daily goal
             const kcal = (e.fat || 0) * 9 + (e.carbs || 0) * 4 + (e.protein || 0) * 4;
             const goal = goals.fat * 9 + goals.carbs * 4 + goals.protein * 4;
@@ -1982,6 +1925,7 @@ function refreshSummary() {
     const date  = document.getElementById('entryDate').value;
     const entry = data[date];
     const card  = document.getElementById('summaryCard');
+    if (!card) return;   // summary card was removed from the UI
 
     if (!entry) { card.style.display = 'none'; return; }
 
@@ -2079,17 +2023,7 @@ function loadGoalsUI() {
         document.getElementById('goalCarbs').value   = goals.carbs;
         document.getElementById('goalProtein').value = goals.protein;
         updateGoalsSummary();
-        // start collapsed when goals already exist
-    } else {
-        // start expanded so user can fill in
-        document.getElementById('goalsBody').classList.add('open');
-        document.getElementById('goalsChevron').classList.add('open');
     }
-}
-
-function toggleGoals() {
-    document.getElementById('goalsBody').classList.toggle('open');
-    document.getElementById('goalsChevron').classList.toggle('open');
 }
 
 function updateGoalsSummary() {
@@ -2109,9 +2043,6 @@ async function saveGoals() {
         await write();
         flash('Goals saved!', 'ok');
         updateGoalsSummary();
-        // collapse after saving
-        document.getElementById('goalsBody').classList.remove('open');
-        document.getElementById('goalsChevron').classList.remove('open');
         refreshSummary();
     } catch (e) {
         flash('Save failed: ' + e.message, 'err');
@@ -3093,7 +3024,8 @@ function fillForm(date) {
     }
     prefillMeasurements();
     refreshSummary();
-    document.getElementById('entryDate').closest('.card').scrollIntoView({ behavior: 'smooth' });
+    switchTab('food');   // History lives in Other; the food form is in the Food tab
+    scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 let snackTimer;
