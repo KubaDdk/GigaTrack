@@ -912,6 +912,8 @@
             padding: 2px;
         }
         .tabs::-webkit-scrollbar { display: none; }
+        /* tab slide animation must not cause sideways scrolling */
+        #mainApp { overflow-x: clip; }
         /* Wider screens: wrap the tabs onto two rows instead of scrolling */
         @media (min-width: 641px) {
             .tabs { flex-wrap: wrap; justify-content: center; overflow-x: visible; gap: 0.4rem; }
@@ -1648,12 +1650,42 @@ function setTheme(theme) {
 const TABS = ['day', 'measurement', 'cardio', 'training', 'habits', 'food', 'projection', 'week', 'other'];
 let currentTab = 'day';
 
+// Tabs slide left/right: the old page slides out, the new one slides in
+// from the side it lies on (later tab → from the right, earlier → from the left).
+let tabAnimToken = 0;
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 function switchTab(tab) {
+    const prev = currentTab;
     currentTab = tab;
-    TABS.forEach(t => {
-        document.getElementById(t + 'Tab').style.display = t === tab ? 'block' : 'none';
-    });
-    if (tab === 'training') renderTrainingChart();
+    const dir   = Math.sign(TABS.indexOf(tab) - TABS.indexOf(prev));   // 1 = forward
+    const oldEl = document.getElementById(prev + 'Tab');
+    const newEl = document.getElementById(tab + 'Tab');
+    const token = ++tabAnimToken;
+    const app   = document.getElementById('mainApp');
+    const animate = dir !== 0 && !reduceMotion() && oldEl && oldEl.style.display !== 'none'
+        && app && app.style.display !== 'none' && typeof newEl.animate === 'function';
+
+    const show = () => {
+        if (token !== tabAnimToken) return;            // a newer switch took over
+        TABS.forEach(t => {
+            document.getElementById(t + 'Tab').style.display = t === tab ? 'block' : 'none';
+        });
+        if (tab === 'training') renderTrainingChart();
+        if (animate) newEl.animate(
+            [{ transform: `translateX(${dir * 70}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
+            { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    };
+
+    if (animate) {
+        oldEl.getAnimations().forEach(a => a.cancel());
+        const out = oldEl.animate(
+            [{ transform: 'none', opacity: 1 }, { transform: `translateX(${-dir * 70}px)`, opacity: 0 }],
+            { duration: 130, easing: 'ease-in', fill: 'forwards' });
+        out.onfinish = () => { show(); out.cancel(); };
+    } else {
+        show();
+    }
     document.querySelectorAll('.tab-btn').forEach(b => {
         const on = b.dataset.tab === tab;
         b.classList.toggle('active', on);
