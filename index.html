@@ -942,6 +942,86 @@
         .tab-btn.complete::after { content: ' ✓'; }
         .tab-btn.complete.active { background: var(--active-bg); box-shadow: 0 0 0 1px var(--green) inset; }
 
+
+        /* ── Achievement tab ── */
+        .ach-stage {
+            position: relative;
+            margin-top: 1rem;
+            border-radius: 14px;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #0d0221 0%, #1e0640 55%, #3a0a4f 100%);
+            border: 1px solid rgba(255, 47, 214, 0.35);
+            padding: 1rem 0 0.5rem;
+        }
+        /* retro sun + floor grid behind the figure */
+        .ach-stage::before {
+            content: '';
+            position: absolute; left: 50%; top: 18%;
+            width: min(46%, 240px); aspect-ratio: 1; transform: translateX(-50%);
+            border-radius: 50%;
+            background: linear-gradient(#ffe14d, #ff9a3c 50%, #ff2f6d);
+            opacity: 0.22;
+            -webkit-mask-image: repeating-linear-gradient(to bottom, #000 0 14px, transparent 14px 19px);
+                    mask-image: repeating-linear-gradient(to bottom, #000 0 14px, transparent 14px 19px);
+        }
+        .ach-stage::after {
+            content: '';
+            position: absolute; left: -50%; right: -50%; bottom: 0; height: 28%;
+            background:
+                repeating-linear-gradient(to right, rgba(255,47,214,0.45) 0 1px, transparent 1px 44px),
+                repeating-linear-gradient(to bottom, rgba(255,47,214,0.45) 0 1px, transparent 1px 22px);
+            transform: perspective(240px) rotateX(55deg);
+            transform-origin: bottom;
+            -webkit-mask-image: linear-gradient(to top, #000, transparent);
+                    mask-image: linear-gradient(to top, #000, transparent);
+        }
+        .ach-figure { position: relative; z-index: 1; display: block; width: 100%; height: min(460px, 110vw); margin: 0 auto; }
+        .ach-figure .fill { fill: #1c0a3a; opacity: 1; }
+        .ach-figure .line { stroke: #22d3ee; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; opacity: 0.45; }
+        .ach-figure .det  { fill: none; stroke: #22d3ee; stroke-width: 1.4; stroke-linecap: round; opacity: 0.22; }
+        .ach-part.ready .line { stroke: #ffcc33; opacity: 0.95; stroke-dasharray: 7 6; animation: ach-dash 1.2s linear infinite; }
+        .ach-part.on .fill { fill: url(#ach-skin); opacity: 1; }
+        .ach-part.on .line { stroke: #fff3fb; opacity: 1; stroke-dasharray: none; filter: drop-shadow(0 0 6px #ff2fd6); }
+        .ach-part.on .det  { stroke: #7a1fa2; opacity: 0.7; }
+        .ach-part.just-placed { animation: ach-flash 1s ease-out; }
+        @keyframes ach-dash  { to { stroke-dashoffset: -26; } }
+        @keyframes ach-flash { 0% { filter: brightness(2.2) drop-shadow(0 0 18px #fff); } 100% { filter: none; } }
+
+        .ach-list { display: grid; gap: 0.7rem; }
+        .ach-piece {
+            display: grid; grid-template-columns: 64px 1fr; gap: 0.9rem; align-items: center;
+            padding: 0.75rem; border-radius: 12px;
+            border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--bg) 60%, transparent);
+        }
+        .ach-thumb {
+            width: 64px; height: 64px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(#0d0221, #2a0845);
+            border: 1px solid rgba(255, 47, 214, 0.3);
+            padding: 6px;
+        }
+        .ach-thumb svg { max-width: 100%; max-height: 100%; overflow: visible; }
+        .ach-name { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+        .ach-goal { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+        .ach-bar { height: 5px; border-radius: 3px; background: var(--border); margin-top: 0.5rem; overflow: hidden; }
+        .ach-bar > div { height: 100%; background: linear-gradient(90deg, #22d3ee, #ff2fd6); border-radius: 3px; }
+        .ach-status { font-size: 0.7rem; margin-top: 0.35rem; color: var(--muted); }
+        .ach-piece.locked { opacity: 0.55; }
+        .ach-piece.placed .ach-status { color: var(--green); }
+        .ach-piece.ready { border-color: #ffcc33; box-shadow: 0 0 14px rgba(255, 204, 51, 0.25); cursor: pointer; }
+        .ach-piece.ready .ach-thumb { animation: ach-bob 1.4s ease-in-out infinite; }
+        .ach-piece.ready .ach-status { color: #ffcc33; font-weight: 700; }
+        @keyframes ach-bob { 50% { transform: translateY(-4px) rotate(-3deg); } }
+        .ach-fly { position: fixed; z-index: 1000; pointer-events: none; transform-origin: 0 0; overflow: visible; }
+        .tab-btn.has-new { position: relative; }
+        .tab-btn.has-new::before {
+            content: ''; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%;
+            background: #ffcc33; box-shadow: 0 0 8px #ffcc33;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ach-part.ready .line, .ach-piece.ready .ach-thumb { animation: none; }
+        }
         /* ── Week tab ── */
         .wk-rings-wrap { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
         .wk-rings { width: 220px; height: 220px; flex: 0 0 auto; }
@@ -1089,6 +1169,7 @@
             <button class="tab-btn" data-tab="food" onclick="switchTab('food')">Food</button>
             <button class="tab-btn" data-tab="projection" onclick="switchTab('projection')">Projection</button>
             <button class="tab-btn" data-tab="week" onclick="switchTab('week')">Week</button>
+            <button class="tab-btn" data-tab="achievement" onclick="switchTab('achievement')">Achievement</button>
             <button class="tab-btn" data-tab="other" onclick="switchTab('other')">Other</button>
         </div>
 
@@ -1475,6 +1556,26 @@
 
         </div><!-- end #projectionTab -->
 
+        <!-- Achievement tab: puzzle pieces that light up the bodybuilder -->
+        <div id="achievementTab" style="display:none">
+
+        <div class="card">
+            <div class="chart-header">
+                <div class="card-label" style="margin-bottom:0">Bodybuilder Puzzle</div>
+                <div class="goals-summary" id="achCount"></div>
+            </div>
+            <div class="ach-stage">
+                <svg id="achFigure" class="ach-figure" viewBox="0 0 400 620" role="img" aria-label="Bodybuilder puzzle"></svg>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Pieces</div>
+            <div id="achList" class="ach-list"></div>
+        </div>
+
+        </div><!-- end #achievementTab -->
+
         <!-- Other tab -->
         <div id="otherTab" style="display:none">
 
@@ -1647,7 +1748,7 @@ function setTheme(theme) {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-const TABS = ['day', 'measurement', 'cardio', 'training', 'habits', 'food', 'projection', 'week', 'other'];
+const TABS = ['day', 'measurement', 'cardio', 'training', 'habits', 'food', 'projection', 'week', 'achievement', 'other'];
 let currentTab = 'day';
 
 // Tabs slide left/right: the old page slides out, the new one slides in
@@ -1835,6 +1936,8 @@ function updateTabBadges() {
         b.title = done ? 'Done for this day (tap to edit)' : '';
     });
     renderWeek();
+    checkAchievements();
+    renderAchievements();
 }
 
 // ── Week tab ──────────────────────────────────────────────────────────────
@@ -1872,6 +1975,150 @@ function weekDatesFor(date) {
 function shiftWeek(delta) {
     const [y, m, d] = selectedDate.split('-').map(Number);
     setSelectedDate(toISODate(new Date(y, m - 1, d + delta * 7)));
+}
+
+// ── Achievements: bodybuilder puzzle ───────────────────────────────────────
+// Each piece is a body part of the figure. Earned pieces wait in the list
+// until tapped, then fly onto the figure and light it up.
+const BODY_SHAPES = {"rarm": {"d": "M136,220 C112,208 82,206 60,200 C44,196 36,186 38,172 C36,150 38,128 42,108 L44,96 C38,88 39,70 50,62 C60,55 77,57 81,69 C85,80 81,90 76,96 C74,108 72,118 74,128 C84,116 102,110 116,118 C128,126 134,140 134,152 C136,162 136,170 138,178 Z", "det": "M74,128 C66,146 60,166 58,188 M86,150 C100,146 116,150 128,162 M44,112 C50,126 50,144 44,160 M52,86 C60,84 70,84 76,88", "mirror": false}, "larm": {"d": "M136,220 C112,208 82,206 60,200 C44,196 36,186 38,172 C36,150 38,128 42,108 L44,96 C38,88 39,70 50,62 C60,55 77,57 81,69 C85,80 81,90 76,96 C74,108 72,118 74,128 C84,116 102,110 116,118 C128,126 134,140 134,152 C136,162 136,170 138,178 Z", "det": "M74,128 C66,146 60,166 58,188 M86,150 C100,146 116,150 128,162 M44,112 C50,126 50,144 44,160 M52,86 C60,84 70,84 76,88", "mirror": true}, "rleg": {"d": "M198,394 C184,390 170,382 156,372 C142,402 132,442 136,482 C138,498 144,508 150,514 C142,532 140,558 150,584 L146,598 L128,606 L182,606 L180,588 C186,562 188,534 184,514 C190,498 196,470 198,440 Z", "det": "M148,420 C154,452 166,472 178,486 M186,420 C182,450 176,470 172,488 M152,530 C156,548 160,562 166,576", "mirror": false}, "lleg": {"d": "M198,394 C184,390 170,382 156,372 C142,402 132,442 136,482 C138,498 144,508 150,514 C142,532 140,558 150,584 L146,598 L128,606 L182,606 L180,588 C186,562 188,534 184,514 C190,498 196,470 198,440 Z", "det": "M148,420 C154,452 166,472 178,486 M186,420 C182,450 176,470 172,488 M152,530 C156,548 160,562 166,576", "mirror": true}, "torso": {"d": "M186,140 C168,146 146,150 130,156 C114,162 108,180 116,196 C122,208 128,214 132,222 C134,250 140,280 156,318 C160,338 158,356 156,372 C172,382 186,390 200,394 C214,390 228,382 244,372 C242,356 240,338 244,318 C260,280 266,250 268,222 C272,214 278,208 284,196 C292,180 286,162 270,156 C254,150 232,146 214,140 Z", "det": "M200,168 L200,374 M140,182 C156,212 184,220 200,212 M260,182 C244,212 216,220 200,212 M118,190 C124,178 132,170 144,166 M282,190 C276,178 268,170 256,166 M180,240 L220,240 M181,270 L219,270 M183,300 L217,300 M185,330 L215,330 M158,318 C174,330 186,350 192,374 M242,318 C226,330 214,350 208,374", "mirror": false}, "head": {"d": "M200,60 C219,60 229,75 229,96 C229,114 222,128 214,134 L216,146 L184,146 L186,134 C178,128 171,114 171,96 C171,75 181,60 200,60 Z", "det": "M171,86 C176,70 186,64 200,64 C214,64 224,70 229,86 M188,102 L196,102 M204,102 L212,102 M193,122 C197,125 203,125 207,122", "mirror": false}};
+
+// Best number of strength sessions in any Monday–Sunday week.
+function bestStrengthWeek() {
+    const perWeek = {};
+    (data._strength || []).forEach(s => {
+        const wk = weekDatesFor(s.date)[0];
+        perWeek[wk] = (perWeek[wk] || 0) + 1;
+    });
+    return Math.max(0, ...Object.values(perWeek));
+}
+
+// Order = drawing order of the figure (arms first so the torso covers the joint).
+const PIECES = [
+    { id: 'rarm',  name: 'Right arm', goal: 'Do 3 strength sessions in one week (Mon–Sun)',
+      target: 3, progress: () => bestStrengthWeek(), unit: 'sessions in your best week' },
+    { id: 'larm',  name: 'Left arm',  soon: true },
+    { id: 'rleg',  name: 'Right leg', soon: true },
+    { id: 'lleg',  name: 'Left leg',  soon: true },
+    { id: 'torso', name: 'Torso',     soon: true },
+    { id: 'head',  name: 'Head',      soon: true },
+];
+
+const achState = id => (data._achievements || {})[id] || {};
+
+function partSVG(id, extraClass = '') {
+    const sh = BODY_SHAPES[id];
+    const tr = sh.mirror ? ' transform="translate(400,0) scale(-1,1)"' : '';
+    return `<g class="ach-part ${extraClass}" id="ach-${id}"${tr}><path class="fill line" d="${sh.d}"/><path class="det" d="${sh.det}"/></g>`;
+}
+const SKIN_DEF = `<defs><linearGradient id="ach-skin" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffd23f"/><stop offset=".45" stop-color="#ff8a3d"/><stop offset="1" stop-color="#ff2fd6"/></linearGradient></defs>`;
+
+// Bounding box of a part in figure coordinates (mirrored parts flipped).
+const partBoxCache = {};
+function partBox(id) {
+    if (partBoxCache[id]) return partBoxCache[id];
+    // measure in a hidden-but-rendered SVG (getBBox is 0 inside display:none tabs)
+    const NS = 'http://www.w3.org/2000/svg';
+    const m = document.createElementNS(NS, 'svg');
+    m.setAttribute('style', 'position:absolute;left:-9999px;top:0;width:400px;height:620px;visibility:hidden');
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', BODY_SHAPES[id].d);
+    m.appendChild(path);
+    document.body.appendChild(m);
+    const b = path.getBBox(), pad = 4;
+    m.remove();
+    if (!b.width) return null;
+    const x = BODY_SHAPES[id].mirror ? 400 - b.x - b.width : b.x;
+    return (partBoxCache[id] = { x: x - pad, y: b.y - pad, w: b.width + 2 * pad, h: b.height + 2 * pad });
+}
+function thumbSVG(id, cls) {
+    const b = partBox(id) || { x: 0, y: 0, w: 400, h: 620 };
+    return `<svg viewBox="${b.x} ${b.y} ${b.w} ${b.h}" class="ach-figure-mini">${SKIN_DEF}<g class="ach-figure">${partSVG(id, cls)}</g></svg>`;
+}
+
+// Record newly earned pieces; save once (outside the current write cycle).
+function checkAchievements() {
+    if (!user) return;
+    const fresh = PIECES.filter(p => !p.soon && !achState(p.id).earned && p.progress() >= p.target);
+    if (!fresh.length) return;
+    data._achievements = { ...(data._achievements || {}) };
+    fresh.forEach(p => { data._achievements[p.id] = { earned: isoToday(), placed: false }; });
+    setTimeout(() => write(), 0);
+    flash(`🏆 New puzzle piece: ${fresh.map(p => p.name).join(', ')}! Open Achievement to place it.`, 'ok');
+}
+
+function renderAchievements() {
+    const fig = document.getElementById('achFigure');
+    if (!fig || !user) return;
+    fig.innerHTML = SKIN_DEF + PIECES.map(p => {
+        const st = achState(p.id);
+        return partSVG(p.id, st.placed ? 'on' : st.earned ? 'ready' : '');
+    }).join('');
+
+    const placed = PIECES.filter(p => achState(p.id).placed).length;
+    document.getElementById('achCount').textContent = `${placed}/${PIECES.length} pieces`;
+
+    document.getElementById('achList').innerHTML = PIECES.map(p => {
+        const st = achState(p.id);
+        let cls, status, bar = '';
+        if (st.placed)      { cls = 'placed'; status = '✓ On the figure'; }
+        else if (st.earned) { cls = 'ready';  status = '✨ Earned! Tap to place it'; }
+        else if (p.soon)    { cls = 'locked'; status = '🔒 Coming soon'; }
+        else {
+            cls = 'locked';
+            const v = Math.min(p.progress(), p.target);
+            status = `${v}/${p.target} ${p.unit}`;
+            bar = `<div class="ach-bar"><div style="width:${v / p.target * 100}%"></div></div>`;
+        }
+        const click = cls === 'ready' ? ` onclick="placePiece('${p.id}', this)" role="button" tabindex="0"` : '';
+        return `<div class="ach-piece ${cls}"${click}>
+            <div class="ach-thumb">${thumbSVG(p.id, st.placed || st.earned ? 'on' : '')}</div>
+            <div><div class="ach-name">${p.name}</div>
+            <div class="ach-goal">${p.goal || 'A new challenge will unlock this piece.'}</div>${bar}
+            <div class="ach-status">${status}</div></div></div>`;
+    }).join('');
+
+    const pending = PIECES.some(p => achState(p.id).earned && !achState(p.id).placed);
+    document.querySelector('.tab-btn[data-tab="achievement"]').classList.toggle('has-new', pending);
+}
+
+// Fly the piece from its card onto the figure, then lock it in place.
+async function placePiece(id, card) {
+    if (card.dataset.busy) return;
+    card.dataset.busy = '1';
+    const fig = document.getElementById('achFigure');
+    const target = document.querySelector(`#achFigure #ach-${id}`);
+    const thumb = card.querySelector('.ach-thumb svg');
+
+    const finish = async () => {
+        data._achievements = { ...(data._achievements || {}), [id]: { ...achState(id), placed: true } };
+        renderAchievements();
+        const el = document.querySelector(`#achFigure #ach-${id}`);
+        if (el) el.classList.add('just-placed');
+        flash('💪 Piece placed!', 'ok');
+        try { await write(); } catch (e) { flash('Save failed: ' + e.message, 'err'); }
+    };
+    if (!target || !thumb || reduceMotion() || !thumb.animate) return finish();
+
+    fig.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    await new Promise(r => setTimeout(r, 450));
+
+    const from = thumb.getBoundingClientRect();
+    const to   = target.getBoundingClientRect();
+    const fly  = thumb.cloneNode(true);
+    fly.classList.add('ach-fly');
+    Object.assign(fly.style, { left: from.left + 'px', top: from.top + 'px', width: from.width + 'px', height: from.height + 'px' });
+    document.body.appendChild(fly);
+    thumb.style.visibility = 'hidden';
+
+    const sx = to.width / from.width, sy = to.height / from.height;
+    const dx = to.left - from.left, dy = to.top - from.top;
+    const anim = fly.animate([
+        { transform: 'translate(0,0) scale(1) rotate(0deg)', offset: 0 },
+        { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 60}px) scale(${(1 + sx) / 2}, ${(1 + sy) / 2}) rotate(-8deg)`, offset: 0.55 },
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy}) rotate(0deg)`, offset: 1 },
+    ], { duration: 950, easing: 'cubic-bezier(.45,.05,.25,1)', fill: 'forwards' });
+    anim.onfinish = () => { fly.remove(); finish(); };
 }
 
 function shiftDay(delta) {
