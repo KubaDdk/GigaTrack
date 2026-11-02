@@ -6,7 +6,10 @@
     <title>GigaTrack</title>
     <meta name="theme-color" content="#07070e">
     <script>
-        try { document.documentElement.dataset.theme = localStorage.getItem('gigatrack-theme') || 'dark'; }
+        try {
+            const t = localStorage.getItem('gigatrack-theme');
+            document.documentElement.dataset.theme = ['dark', 'light', 'retrowave'].includes(t) ? t : 'dark';
+        }
         catch (e) { document.documentElement.dataset.theme = 'dark'; }
     </script>
     <style>
@@ -57,6 +60,60 @@
             --shadow:   rgba(30,30,60,0.15);
             color-scheme: light;
         }
+        /* Retrowave: neon pink/cyan on a purple night sky */
+        :root[data-theme="retrowave"] {
+            --bg:       #12052a;
+            --surface:  #1b0838;
+            --surface2: #24104a;
+            --border:   #3d1a6e;
+            --blue:     #22d3ee;
+            --purple:   #e040fb;
+            --gold:     #ffcc33;
+            --green:    #4dffb8;
+            --red:      #ff3d71;
+            --text:     #f5e1ff;
+            --muted:    #9a78c8;
+            --grad:     linear-gradient(135deg, #ff2fd6 0%, #ff8a3d 55%, #ffd23f 100%);
+            --grid:     #2a1150;
+            --grid2:    #1e0b3c;
+            --grid-hi:  #4a1f80;
+            --active-bg:#2a0f52;
+            --btn:      #2d1257;
+            --btn-hover:#3b1870;
+            --btn-ghost:#220c44;
+            --row-line: rgba(255,47,214,0.10);
+            --shadow:   rgba(255,47,214,0.25);
+            color-scheme: dark;
+        }
+        [data-theme="retrowave"] body {
+            background: linear-gradient(to bottom, #0d0221 0%, #1e0640 45%, #3a0a4f 80%, #5c0f55 100%) fixed;
+        }
+        /* neon perspective grid on the horizon */
+        [data-theme="retrowave"] body::before {
+            content: '';
+            position: fixed;
+            left: -50%; right: -50%; bottom: 0;
+            height: 45vh;
+            background:
+                repeating-linear-gradient(to right, rgba(255,47,214,0.35) 0 1px, transparent 1px 60px),
+                repeating-linear-gradient(to bottom, rgba(255,47,214,0.35) 0 1px, transparent 1px 40px);
+            transform: perspective(300px) rotateX(60deg);
+            transform-origin: bottom;
+            -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 85%);
+                    mask-image: linear-gradient(to top, #000 0%, transparent 85%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        [data-theme="retrowave"] .card {
+            background: rgba(18, 5, 42, 0.86);
+            border-color: rgba(255, 47, 214, 0.38);
+            box-shadow: 0 0 22px rgba(255, 47, 214, 0.12), inset 0 0 0 1px rgba(34, 211, 238, 0.05);
+        }
+        [data-theme="retrowave"] .hdr h1 { filter: drop-shadow(0 0 10px rgba(255, 47, 214, 0.55)); }
+        [data-theme="retrowave"] .card-label { text-shadow: 0 0 8px rgba(34, 211, 238, 0.55); }
+        [data-theme="retrowave"] .tab-btn.active { box-shadow: 0 0 12px rgba(34, 211, 238, 0.35); }
+        [data-theme="retrowave"] .btn-primary { border-color: rgba(255, 47, 214, 0.45); }
+        [data-theme="retrowave"] .btn-primary:hover { box-shadow: 0 0 14px rgba(255, 47, 214, 0.35); }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -202,18 +259,26 @@
             margin-bottom: 0.45rem;
         }
         .menu-email { font-size: 0.85rem; color: var(--text); word-break: break-all; }
-        .theme-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
-        .theme-opt {
-            padding: 0.6rem 0.4rem;
+        .theme-select {
+            width: 100%;
+            padding: 0.6rem 2rem 0.6rem 0.7rem;
             border-radius: 8px;
             border: 1px solid var(--border);
-            background: var(--bg);
-            color: var(--muted);
-            font-size: 0.75rem;
+            background-color: var(--bg);
+            color: var(--text);
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            /* chevron */
+            background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+            background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+            background-size: 5px 5px;
+            background-repeat: no-repeat;
         }
-        .theme-opt.active { border-color: var(--blue); color: var(--blue); background: var(--active-bg); }
+        .theme-select:focus { outline: none; border-color: var(--blue); }
+        .theme-select option { background: var(--surface); color: var(--text); }
         .menu-signout {
             width: 100%;
             margin-top: 0.3rem;
@@ -920,10 +985,11 @@
             </div>
             <div class="menu-section">
                 <div class="menu-label">Theme</div>
-                <div class="theme-switch">
-                    <button type="button" class="theme-opt" data-theme-opt="dark"  onclick="setTheme('dark')">🌙 Dark</button>
-                    <button type="button" class="theme-opt" data-theme-opt="light" onclick="setTheme('light')">☀️ Light</button>
-                </div>
+                <select class="theme-select" id="themeSelect" onchange="setTheme(this.value)" aria-label="Theme">
+                    <option value="dark">🌙 Dark</option>
+                    <option value="light">☀️ Light</option>
+                    <option value="retrowave">🌆 Retrowave</option>
+                </select>
             </div>
             <button type="button" class="menu-signout" id="signOutBtn" onclick="closeMenu(); signOut()" style="display:none">Sign Out</button>
         </div>
@@ -1502,11 +1568,15 @@ addEventListener('click', e => {
 });
 addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
+const THEME_COLORS = { dark: '#07070e', light: '#f3f4fa', retrowave: '#0d0221' };
+
 function applyTheme(theme) {
+    if (!THEME_COLORS[theme]) theme = 'dark';
     document.documentElement.dataset.theme = theme;
-    document.querySelectorAll('.theme-opt').forEach(b => b.classList.toggle('active', b.dataset.themeOpt === theme));
+    const sel = document.getElementById('themeSelect');
+    if (sel) sel.value = theme;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = theme === 'light' ? '#f3f4fa' : '#07070e';
+    if (meta) meta.content = THEME_COLORS[theme] || THEME_COLORS.dark;
 }
 
 function setTheme(theme) {
