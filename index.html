@@ -842,7 +842,7 @@
         .wk-rings { width: 220px; height: 220px; flex: 0 0 auto; }
         .wk-rings .ring-track { stroke: var(--border); }
         .wk-rings .ring-val { transition: stroke-dasharray 0.5s ease; }
-        .wk-center-pct { font-size: 22px; font-weight: 200; fill: var(--text); }
+        .wk-center-pct { font-size: 18px; font-weight: 200; fill: var(--text); }
         .wk-center-lbl { font-size: 6.5px; letter-spacing: 1.5px; fill: var(--muted); text-transform: uppercase; }
         .wk-legend { display: grid; gap: 0.6rem; min-width: 210px; }
         .wk-leg { display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 0.6rem; font-size: 0.8rem; }
@@ -1682,15 +1682,19 @@ const WEEK_RINGS = [
     { key: 'cardio',      label: 'Cardio',       color: '#f97316' },
     { key: 'training',    label: 'Training',     color: '#9b5fff' },
     { key: 'habits',      label: 'Habits',       color: '#5b8fff' },
+    { key: 'money',       label: 'Money',        color: '#2dd4bf' },
     { key: 'food',        label: 'Food',         color: '#f0b429' },
 ];
 
-// Habits get partial credit per day (water, meals, money each a third).
+// Habits ring: water + meals, partial credit (money has its own ring).
 function habitDayScore(d) {
     const h = dailyHabits(d);
-    const money = h.noSpend || h.spent != null ? 1 : 0;
-    return (Math.min(countTrue(h.glasses), 5) / 5 + Math.min(countTrue(h.meals), 4) / 4 + money) / 3;
+    return (Math.min(countTrue(h.glasses), 5) / 5 + Math.min(countTrue(h.meals), 4) / 4) / 2;
 }
+
+// Money ring: the day counts once money is logged (an amount or "nothing spent").
+const moneyLogged = d => { const h = dailyHabits(d); return !!h.noSpend || h.spent != null; };
+const moneySpent  = d => dailyHabits(d).spent || 0;
 
 function weekDatesFor(date) {
     const [y, m, d] = date.split('-').map(Number);
@@ -1715,7 +1719,7 @@ function shiftDay(delta) {
 
 // Concentric rings: scores = [{ label, color, pct (0..1), text }]
 function drawRings(svgId, legendId, scores, centerLbl) {
-    const C = 110, W = 13, GAP = 4;
+    const C = 110, W = 11, GAP = 3;
     let out = '';
     scores.forEach((r, i) => {
         const rad = 100 - i * (W + GAP);
@@ -1755,9 +1759,9 @@ function dayItemsHTML(d) {
     const hp = [];
     if (countTrue(h.glasses)) hp.push(`💧 ${countTrue(h.glasses)}/5`);
     if (countTrue(h.meals))   hp.push(`🍽️ ${countTrue(h.meals)}/4`);
-    if (h.noSpend)            hp.push('💰 no spend');
-    else if (h.spent != null) hp.push(`💰 ${fmtEur(h.spent)}`);
     if (hp.length) item('✅', hp.join('&nbsp;&nbsp;'));
+    if (h.noSpend)            item('💰', 'Nothing spent');
+    else if (h.spent != null) item('💰', `${fmtEur(h.spent)} spent`);
     if (e.fat != null || e.carbs != null || e.protein != null) {
         const kcal = Math.round((e.fat || 0) * 9 + (e.carbs || 0) * 4 + (e.protein || 0) * 4);
         item('🍎', `${kcal.toLocaleString()} kcal`, `${fmt(e.fat || 0)}g fat · ${fmt(e.carbs || 0)}g carbs · ${fmt(e.protein || 0)}g protein`);
@@ -1781,6 +1785,11 @@ function renderDay() {
         if (r.key === 'habits') {
             const pct = habitDayScore(d);
             return { ...r, pct, text: `<b>${Math.round(pct * 100)}%</b>` };
+        }
+        if (r.key === 'money') {
+            const h = dailyHabits(d);
+            const text = h.noSpend ? '<b>No spend</b>' : h.spent != null ? `<b>${fmtEur(h.spent)}</b> spent` : '—';
+            return { ...r, pct: moneyLogged(d) ? 1 : 0, text };
         }
         if (r.key === 'food' && goals && (e.fat != null || e.carbs != null || e.protein != null)) {
             // Food: calories eaten vs the daily goal
@@ -1813,6 +1822,11 @@ function renderWeek() {
         if (r.key === 'habits') {
             const sum = dates.reduce((t, d) => t + habitDayScore(d), 0);
             return { ...r, pct: sum / 7, text: `<b>${Math.round(sum / 7 * 100)}%</b>` };
+        }
+        if (r.key === 'money') {
+            const n = dates.filter(moneyLogged).length;
+            const total = dates.reduce((t, d) => t + moneySpent(d), 0);
+            return { ...r, pct: n / 7, text: `<b>${fmtEur(total)}</b> · ${n}/7 days` };
         }
         const n = dates.filter(d => TAB_COMPLETE[r.key](d)).length;
         return { ...r, pct: n / 7, text: `<b>${n}</b>/7 days` };
