@@ -104,11 +104,17 @@
             pointer-events: none;
             z-index: -1;
         }
+        /* Translucent "glass" cards so the sky and grid show through */
         [data-theme="retrowave"] .card {
-            background: rgba(18, 5, 42, 0.86);
+            background: rgba(18, 5, 42, 0.55);
+            -webkit-backdrop-filter: blur(6px);
+                    backdrop-filter: blur(6px);
             border-color: rgba(255, 47, 214, 0.38);
             box-shadow: 0 0 22px rgba(255, 47, 214, 0.12), inset 0 0 0 1px rgba(34, 211, 238, 0.05);
         }
+        [data-theme="retrowave"] .field input,
+        [data-theme="retrowave"] .part-btn,
+        [data-theme="retrowave"] .check-btn { background: rgba(13, 2, 33, 0.45); }
         [data-theme="retrowave"] .card-label { text-shadow: 0 0 8px rgba(34, 211, 238, 0.55); }
         [data-theme="retrowave"] .tab-btn.active { box-shadow: 0 0 12px rgba(34, 211, 238, 0.35); }
         [data-theme="retrowave"] .btn-primary { border-color: rgba(255, 47, 214, 0.45); }
