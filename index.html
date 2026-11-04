@@ -1022,6 +1022,20 @@
         @media (prefers-reduced-motion: reduce) {
             .ach-part.ready .line, .ach-piece.ready .ach-thumb { animation: none; }
         }
+        /* ── Test tab: Jack pop-up ── */
+        .jack-stage {
+            position: fixed; left: 50%; bottom: 0; z-index: 9999;
+            width: min(70vw, 312px); aspect-ratio: 208 / 312;
+            transform: translateX(-50%);
+            pointer-events: none; display: none;
+        }
+        .jack-stage img {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            transform: translateY(110%);
+        }
+        /* hand pops up beside Jack's chest, not over his face */
+        .jack-stage #jackThumb { left: 40%; top: 22%; }
+
         /* ── Week tab ── */
         .wk-rings-wrap { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
         .wk-rings { width: 220px; height: 220px; flex: 0 0 auto; }
@@ -1171,6 +1185,7 @@
             <button class="tab-btn" data-tab="week" onclick="switchTab('week')">Week</button>
             <button class="tab-btn" data-tab="achievement" onclick="switchTab('achievement')">Achievement</button>
             <button class="tab-btn" data-tab="other" onclick="switchTab('other')">Other</button>
+            <button class="tab-btn" data-tab="test" onclick="switchTab('test')">TEST</button>
         </div>
 
         <!-- Measurement tab -->
@@ -1612,7 +1627,21 @@
 
         </div><!-- end #otherTab -->
 
+        <!-- Test tab -->
+        <div id="testTab" style="display:none">
+            <div class="card">
+                <div class="card-label">Test</div>
+                <button class="btn btn-primary" onclick="playJackA()">jack a</button>
+            </div>
+        </div><!-- end #testTab -->
+
     </div>
+</div>
+
+<!-- Jack pop-up (Test tab) -->
+<div class="jack-stage" id="jackStage" aria-hidden="true">
+    <img src="images/Jack_a.png" alt="" id="jackA">
+    <img src="images/Jack_hand_thumbs.png" alt="" id="jackThumb">
 </div>
 
 <!-- Snackbar -->
@@ -1748,7 +1777,7 @@ function setTheme(theme) {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-const TABS = ['day', 'measurement', 'cardio', 'training', 'habits', 'food', 'projection', 'week', 'achievement', 'other'];
+const TABS = ['day', 'measurement', 'cardio', 'training', 'habits', 'food', 'projection', 'week', 'achievement', 'other', 'test'];
 let currentTab = 'day';
 
 // Tabs slide left/right: the old page slides out, the new one slides in
@@ -1792,6 +1821,29 @@ function switchTab(tab) {
         b.classList.toggle('active', on);
         if (on) b.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     });
+}
+
+// Test tab: Jack slides up from the bottom, holds 1s, slides back down.
+// The thumbs-up hand follows the same motion with a short delay.
+function playJackA() {
+    const stage = document.getElementById('jackStage');
+    const jack  = document.getElementById('jackA');
+    const thumb = document.getElementById('jackThumb');
+    if (!stage || !jack.animate) return;
+    [jack, thumb].forEach(el => el.getAnimations().forEach(a => a.cancel()));
+    stage.style.display = 'block';
+
+    const SLIDE = 450, HOLD = 1000, DELAY = 180;
+    const total = SLIDE * 2 + HOLD;
+    const frames = [
+        { transform: 'translateY(110%)', easing: 'cubic-bezier(.2,.8,.3,1)' },
+        { transform: 'translateY(0)', offset: SLIDE / total },
+        { transform: 'translateY(0)', offset: (SLIDE + HOLD) / total, easing: 'cubic-bezier(.6,0,.8,.3)' },
+        { transform: 'translateY(110%)' }
+    ];
+    jack.animate(frames, { duration: total });
+    const last = thumb.animate(frames, { duration: total, delay: DELAY });
+    last.onfinish = () => { stage.style.display = 'none'; };
 }
 
 // Swipe left/right on the page content to move between tabs.
