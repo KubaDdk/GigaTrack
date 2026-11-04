@@ -1035,6 +1035,13 @@
         }
         /* hand pops up beside Jack's chest, not over his face */
         .jack-stage #jackThumb { left: -16%; top: 47%; width: 80%; height: 80%; }
+        .jack-glasses-stage {
+            position: fixed; left: 50%; bottom: 0; z-index: 9999;
+            width: min(85vw, 380px); aspect-ratio: 304 / 249;
+            margin-left: calc(min(85vw, 380px) / -2);
+            pointer-events: none; display: none;
+        }
+        .jack-glasses-stage img { display: block; width: 100%; height: 100%; }
 
         /* ── Week tab ── */
         .wk-rings-wrap { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
@@ -1632,6 +1639,7 @@
             <div class="card">
                 <div class="card-label">Test</div>
                 <button class="btn btn-primary" onclick="playJackA()">jack a</button>
+                <button class="btn btn-primary" onclick="playJackSunglasses()">jack sunglasses</button>
             </div>
         </div><!-- end #testTab -->
 
@@ -1642,6 +1650,11 @@
 <div class="jack-stage" id="jackStage" aria-hidden="true">
     <img src="images/Jack_a.png" alt="" id="jackA">
     <img src="images/Jack_hand_thumbs.png" alt="" id="jackThumb">
+</div>
+
+<!-- Jack sunglasses (Test tab) -->
+<div class="jack-glasses-stage" id="jackGlassesStage" aria-hidden="true">
+    <img src="images/Jack_sunglasses.png" alt="" id="jackGlasses">
 </div>
 
 <!-- Snackbar -->
@@ -1844,6 +1857,51 @@ function playJackA() {
     jack.animate(frames, { duration: total });
     const last = thumb.animate(frames, { duration: total, delay: DELAY });
     last.onfinish = () => { stage.style.display = 'none'; };
+}
+
+// Test tab: Jack slides in from the right (blur b → blur a → sharp), flashes his
+// sunglasses (flash a → b → c), then slides back out the same way, reversed.
+const JACK_GLASSES = {};
+['', '_blur_a', '_blur_b', '_flash_a', '_flash_b', '_flash_c'].forEach(k => {
+    const im = new Image();
+    im.src = `images/Jack_sunglasses${k}.png`;           // preload so frame swaps don't flicker
+    JACK_GLASSES[k || 'normal'] = im.src;
+});
+let jackGlassesRun = 0;
+async function playJackSunglasses() {
+    const stage = document.getElementById('jackGlassesStage');
+    const img   = document.getElementById('jackGlasses');
+    if (!stage || !stage.animate) return;
+    const run   = ++jackGlassesRun;
+    const alive = () => run === jackGlassesRun;
+    const wait  = ms => new Promise(r => setTimeout(r, ms));
+    const frame = k => { if (alive()) img.src = JACK_GLASSES[k]; };
+    stage.getAnimations().forEach(a => a.cancel());
+
+    const SLIDE = 500;
+    const off = 'translateX(calc(50vw + 100%))';          // fully past the right edge
+    stage.style.display = 'block';
+
+    // Slide in: blur b, then blur a, then the sharp image as he stops
+    frame('_blur_b');
+    stage.animate([{ transform: off }, { transform: 'translateX(0)' }],
+        { duration: SLIDE, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
+    await wait(SLIDE * 0.55); frame('_blur_a');
+    await wait(SLIDE * 0.30); frame('normal');
+    await wait(SLIDE * 0.15 + 400); if (!alive()) return;
+
+    // Sunglasses flash
+    for (const k of ['_flash_a', '_flash_b', '_flash_c']) { frame(k); await wait(150); }
+    await wait(350); if (!alive()) return;
+
+    // Slide out the way he came: sharp, blur a, blur b
+    frame('normal');
+    const out = stage.animate([{ transform: 'translateX(0)' }, { transform: off }],
+        { duration: SLIDE, easing: 'cubic-bezier(.7,0,.8,.2)', fill: 'forwards' });
+    await wait(SLIDE * 0.15); frame('_blur_a');
+    await wait(SLIDE * 0.30); frame('_blur_b');
+    await out.finished.catch(() => {});
+    if (alive()) { stage.style.display = 'none'; out.cancel(); }
 }
 
 // Swipe left/right on the page content to move between tabs.
