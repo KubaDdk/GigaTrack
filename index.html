@@ -475,6 +475,23 @@
             line-height: 1.5;
         }
         .last-session:empty { display: none; }
+        /* Cardio sessions logged on the selected day */
+        .cardio-day:empty { display: none; }
+        .cardio-day { margin-top: 1.1rem; }
+        .cardio-day-label { font-size: 0.58rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.45rem; }
+        .cardio-item {
+            display: flex; align-items: center; gap: 0.6rem;
+            background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--c, var(--blue));
+            border-radius: 8px; padding: 0.5rem 0.5rem 0.5rem 0.75rem; margin-bottom: 0.4rem;
+        }
+        .cardio-item-type { font-weight: 600; color: var(--c, var(--text)); min-width: 3.6rem; }
+        .cardio-item-stats { flex: 1; font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .cardio-item-stats b { color: var(--text); font-weight: 600; }
+        .cardio-del {
+            background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--muted);
+            cursor: pointer; font-size: 0.95rem; line-height: 1; padding: 0.35rem 0.5rem; flex-shrink: 0;
+        }
+        .cardio-del:hover { color: var(--red); border-color: var(--red); }
         .last-session b { color: var(--text); font-weight: 600; }
         .step-btn:hover  { border-color: var(--blue); }
         .step-btn:active { background: var(--active-bg); }
@@ -1280,6 +1297,7 @@
                 </div>
             </div>
             <button class="btn btn-primary" onclick="saveCardio()">Log Session</button>
+            <div class="cardio-day" id="cardioDayList"></div>
         </div>
 
         <!-- Cardio chart -->
@@ -1733,7 +1751,7 @@ function setSelectedDate(date, refresh = true) {
     btn.textContent = dateButtonLabel(date);
     btn.classList.toggle('past', !followingToday);
 
-    if (refresh) { refreshSummary(); prefillMeasurements(); renderDailyHabits(); }
+    if (refresh) { refreshSummary(); prefillMeasurements(); renderDailyHabits(); renderCardioDay(); }
     updateTabBadges();
 }
 
@@ -2376,6 +2394,7 @@ function boot() {
     loadProfileUI();
     prefillMeasurements();
     prefillCardio();
+    renderCardioDay();
     renderTrainingChart();
     renderDailyHabits();
     render();
@@ -2956,6 +2975,42 @@ function prefillCardio() {
 }
 
 
+// Small cards for every cardio session saved on the selected day, each deletable.
+function renderCardioDay() {
+    const box  = document.getElementById('cardioDayList');
+    const date = document.getElementById('cardioDate').value;
+    if (!box) return;
+    const list = (data._cardio || []).filter(s => s.date === date).sort((a, b) => a.id - b.id);
+    if (!list.length) { box.innerHTML = ''; return; }
+    box.innerHTML = `<div class="cardio-day-label">Sessions this day</div>` + list.map(s => {
+        const type = CARDIO_TYPES.includes(s.type) ? s.type : 'other';
+        return `<div class="cardio-item" style="--c:${CARDIO_COLORS[type]}">
+            <span class="cardio-item-type">${type[0].toUpperCase() + type.slice(1)}</span>
+            <span class="cardio-item-stats"><b>${Number(s.duration) || 0}</b> min · <b>${Number(s.calories) || 0}</b> kcal</span>
+            <button type="button" class="cardio-del" onclick="deleteCardio(${Number(s.id)})" aria-label="Delete session" title="Delete session">✕</button>
+        </div>`;
+    }).join('');
+}
+
+async function deleteCardio(id) {
+    const all = data._cardio || [];
+    const idx = all.findIndex(s => s.id === id);
+    if (idx < 0 || !confirm('Delete this cardio session?')) return;
+    const [removed] = all.splice(idx, 1);
+    try {
+        await write();
+        flash('Session deleted.', 'ok');
+    } catch (e) {
+        all.splice(idx, 0, removed);                // put it back if the save failed
+        flash('Delete failed: ' + e.message, 'err');
+    }
+    renderCardioDay();
+    prefillCardio();
+    renderCardioChart();
+    renderProjectionChart();
+    updateTabBadges();
+}
+
 async function saveCardio() {
     const date     = document.getElementById('cardioDate').value;
     if (!date) { flash('Pick a date first.', 'err'); return; }
@@ -2966,6 +3021,8 @@ async function saveCardio() {
     try {
         await write();
         flash('Session logged!', 'ok');
+        renderCardioDay();
+        updateTabBadges();
         prefillCardio();
         renderCardioChart();
         renderProjectionChart();
