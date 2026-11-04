@@ -492,6 +492,10 @@
             cursor: pointer; font-size: 0.95rem; line-height: 1; padding: 0.35rem 0.5rem; flex-shrink: 0;
         }
         .cardio-del:hover { color: var(--red); border-color: var(--red); }
+        .spend-row { display: flex; gap: 0.5rem; align-items: stretch; }
+        .spend-row input { flex: 1; min-width: 0; }
+        .spend-row .btn { width: auto; flex-shrink: 0; margin: 0; padding-left: 1.2rem; padding-right: 1.2rem; }
+        #spendTotal { color: var(--gold); font-weight: 600; }
         .last-session b { color: var(--text); font-weight: 600; }
         .step-btn:hover  { border-color: var(--blue); }
         .step-btn:active { background: var(--active-bg); }
@@ -1390,8 +1394,17 @@
             <button type="button" class="check-btn wide" id="noSpendBtn" onclick="toggleNoSpend()">Nothing spent today</button>
             <div class="field" style="margin:0.9rem 0 0">
                 <label>Spent (€)</label>
-                <input type="number" id="spentInput" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+                <div class="spend-row">
+                    <input type="number" id="spentInput" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+                    <button type="button" class="btn btn-primary" onclick="addSpent()">Add</button>
+                </div>
             </div>
+        </div>
+
+        <!-- Money spent on the selected day -->
+        <div class="card" id="spendListCard" style="display:none">
+            <div class="card-label">Spent this day <span class="daily-count" id="spendTotal"></span></div>
+            <div id="spendList"></div>
         </div>
 
         <!-- Meals -->
@@ -1721,7 +1734,7 @@ addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && followingToday && selectedDate !== isoToday()) setSelectedDate(isoToday());
     });
-    document.getElementById('spentInput').addEventListener('change', saveSpent);
+    document.getElementById('spentInput').addEventListener('keydown', e => { if (e.key === 'Enter') addSpent(); });
     await tryRestoreSession();
 });
 
@@ -3174,16 +3187,47 @@ function toggleNoSpend() {
     const date = document.getElementById('dailyDate').value;
     if (!date) return;
     const on = !dailyHabits(date).noSpend;
-    setDailyHabit(date, on ? { noSpend: true, spent: null } : { noSpend: false });
+    if (on && spendEntries(dailyHabits(date)).length && !confirm('Mark as nothing spent? This removes the amounts saved for this day.')) return;
+    setDailyHabit(date, on ? { noSpend: true, spent: null, spends: [] } : { noSpend: false });
     if (on && !reduceMotion()) playJackA();   // celebrate a no-spend day
 }
 
-function saveSpent() {
+// Each amount added for a day is kept in habits.spends; habits.spent stays the
+// day's total so the week view, badges and stats keep working unchanged.
+// Days saved before this existed only have `spent` — shown as one entry.
+function spendEntries(h) {
+    if (Array.isArray(h.spends)) return h.spends;
+    return h.spent != null ? [{ id: 0, amount: h.spent }] : [];
+}
+const sumSpends = list => Math.round(list.reduce((t, s) => t + s.amount, 0) * 100) / 100;
+
+function addSpent() {
     const date = document.getElementById('dailyDate').value;
     if (!date) return;
-    const v = parseFloat(document.getElementById('spentInput').value);
-    const spent = isNaN(v) || v <= 0 ? null : Math.round(v * 100) / 100;
-    setDailyHabit(date, spent != null ? { spent, noSpend: false } : { spent: null });
+    const inp = document.getElementById('spentInput');
+    const v = parseFloat(inp.value);
+    if (isNaN(v) || v <= 0) { flash('Enter an amount first.', 'err'); return; }
+    const spends = [...spendEntries(dailyHabits(date)), { id: Date.now(), amount: Math.round(v * 100) / 100 }];
+    inp.value = '';
+    setDailyHabit(date, { spends, spent: sumSpends(spends), noSpend: false }, 'Added');
+}
+
+function deleteSpent(id) {
+    const date = document.getElementById('dailyDate').value;
+    if (!date || !confirm('Delete this amount?')) return;
+    const spends = spendEntries(dailyHabits(date)).filter(s => s.id !== id);
+    setDailyHabit(date, { spends, spent: spends.length ? sumSpends(spends) : null }, 'Deleted');
+}
+
+function renderSpendList(h) {
+    const list = spendEntries(h);
+    document.getElementById('spendListCard').style.display = list.length ? 'block' : 'none';
+    document.getElementById('spendTotal').textContent = list.length ? `Total ${fmtEur(sumSpends(list))}` : '';
+    document.getElementById('spendList').innerHTML = list.map(s => `
+        <div class="cardio-item" style="--c:var(--gold)">
+            <span class="cardio-item-stats"><b>${fmtEur(Number(s.amount) || 0)}</b></span>
+            <button type="button" class="cardio-del" onclick="deleteSpent(${Number(s.id)})" aria-label="Delete amount" title="Delete amount">✕</button>
+        </div>`).join('');
 }
 
 function renderDailyHabits() {
@@ -3197,8 +3241,7 @@ function renderDailyHabits() {
     fill('glassChecks', 'glasses', 5, 'glassCount');
     fill('mealChecks', 'meals', 4, 'mealCount');
     document.getElementById('noSpendBtn').classList.toggle('done', !!h.noSpend);
-    const inp = document.getElementById('spentInput');
-    if (document.activeElement !== inp) inp.value = h.spent != null ? h.spent : '';
+    renderSpendList(h);
 }
 
 // ── Strength Training ─────────────────────────────────────────────────────
