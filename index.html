@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GigaTrack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
     <meta name="theme-color" content="#07070e">
     <script>
         try {
@@ -125,7 +128,7 @@
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Pixelify Sans', system-ui, sans-serif;
             min-height: 100vh;
             padding: 2.5rem 1rem 4rem;
         }
@@ -365,7 +368,7 @@
 
         .setup-desc code {
             color: var(--blue);
-            font-family: 'SF Mono', 'Consolas', monospace;
+            font-family: 'Pixelify Sans', monospace;
         }
 
         .setup-btns {
@@ -413,6 +416,7 @@
         .stepper input::-webkit-inner-spin-button,
         .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         .stepper input[type="number"] { -moz-appearance: textfield; }
+        .stepper input.locked { opacity: 0.75; cursor: not-allowed; }
         .step-btn {
             flex: 0 0 auto;
             width: 2.9rem;
@@ -665,7 +669,7 @@
             font-size: 0.72rem;
             letter-spacing: 1px;
             color: var(--muted);
-            font-family: 'SF Mono', 'Consolas', monospace;
+            font-family: 'Pixelify Sans', monospace;
         }
         .hist-table td.c-date.today { color: var(--green); }
 
@@ -1292,7 +1296,7 @@
                     <button type="button" class="step-btn" onclick="stepMeasure('cardioSteps', 0.5); calcWalkCalories()" aria-label="Increase steps">▲</button>
                 </div>
             </div>
-            <div class="field">
+            <div class="field" id="cardioDurationField">
                 <label>Duration (min)</label>
                 <div class="stepper">
                     <button type="button" class="step-btn" onclick="stepMeasure('cardioDuration', -1, 0)" aria-label="Decrease duration">▼</button>
@@ -1303,9 +1307,9 @@
             <div class="field">
                 <label>Calories burned</label>
                 <div class="stepper">
-                    <button type="button" class="step-btn" onclick="stepMeasure('cardioCalories', -1, 0)" aria-label="Decrease calories">▼</button>
+                    <button type="button" class="step-btn cal-step" onclick="stepMeasure('cardioCalories', -1, 0)" aria-label="Decrease calories">▼</button>
                     <input type="number" id="cardioCalories" min="0" step="1" inputmode="numeric" placeholder="0">
-                    <button type="button" class="step-btn" onclick="stepMeasure('cardioCalories', 1, 0)" aria-label="Increase calories">▲</button>
+                    <button type="button" class="step-btn cal-step" onclick="stepMeasure('cardioCalories', 1, 0)" aria-label="Increase calories">▲</button>
                 </div>
             </div>
             <button class="btn btn-primary" onclick="saveCardio()">Log Session</button>
@@ -2742,7 +2746,7 @@ function renderChart() {
 
     if (pts.length === 0) {
         svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle"
-            fill="var(--muted)" font-size="11" font-family="'Segoe UI',sans-serif">No data in this range.</text>`;
+            fill="var(--muted)" font-size="11" font-family="'Pixelify Sans',sans-serif">No data in this range.</text>`;
         return;
     }
 
@@ -2779,7 +2783,7 @@ function renderChart() {
             const v = wScale.hi - (i / 4) * (wScale.hi - wScale.lo);
             out += `<text x="${PL-7}" y="${PT+(i/4)*CH+4}" text-anchor="end"
                 fill="#4ade80" font-size="9" opacity="0.75"
-                font-family="'Segoe UI',sans-serif">${v.toFixed(1)}</text>`;
+                font-family="'Pixelify Sans',sans-serif">${v.toFixed(1)}</text>`;
         }
     }
 
@@ -2789,7 +2793,7 @@ function renderChart() {
             const v = cScale.hi - (i / 4) * (cScale.hi - cScale.lo);
             out += `<text x="${W-PR+7}" y="${PT+(i/4)*CH+4}" text-anchor="start"
                 fill="#c084fc" font-size="9" opacity="0.75"
-                font-family="'Segoe UI',sans-serif">${v.toFixed(1)}</text>`;
+                font-family="'Pixelify Sans',sans-serif">${v.toFixed(1)}</text>`;
         }
     }
 
@@ -2798,7 +2802,7 @@ function renderChart() {
         const x = xOf(pts[i].date);
         out += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}" stroke="var(--grid2)" stroke-width="1"/>`;
         out += `<text x="${x}" y="${H-PB+16}" text-anchor="middle"
-            fill="var(--muted)" font-size="9" font-family="'Segoe UI',sans-serif">${fmtDateLabel(pts[i].date, chartRange)}</text>`;
+            fill="var(--muted)" font-size="9" font-family="'Pixelify Sans',sans-serif">${fmtDateLabel(pts[i].date, chartRange)}</text>`;
     });
 
     // Weight line + dots
@@ -2863,7 +2867,7 @@ function renderCalorieChart() {
 
     if (pts.length === 0) {
         svg.innerHTML = `<text x="340" y="100" text-anchor="middle" fill="var(--muted)" font-size="11"
-            font-family="'Segoe UI',sans-serif">No calorie data in this range.</text>`;
+            font-family="'Pixelify Sans',sans-serif">No calorie data in this range.</text>`;
         return;
     }
 
@@ -2896,14 +2900,14 @@ function renderCalorieChart() {
         const v = Math.round(yMax - (i / 4) * (yMax - yMin));
         out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
         out += `<text x="${PL-7}" y="${y+4}" text-anchor="end" fill="var(--muted)" font-size="9"
-            font-family="'Segoe UI',sans-serif">${v}</text>`;
+            font-family="'Pixelify Sans',sans-serif">${v}</text>`;
     }
 
     sampleIndices(pts.length, 7).forEach(i => {
         const x = xOf(pts[i].date);
         out += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}" stroke="var(--grid2)" stroke-width="1"/>`;
         out += `<text x="${x}" y="${H-PB+16}" text-anchor="middle" fill="var(--muted)" font-size="9"
-            font-family="'Segoe UI',sans-serif">${fmtDateLabel(pts[i].date, calorieChartRange)}</text>`;
+            font-family="'Pixelify Sans',sans-serif">${fmtDateLabel(pts[i].date, calorieChartRange)}</text>`;
     });
 
     if (goalKcal) {
@@ -2911,7 +2915,7 @@ function renderCalorieChart() {
         out += `<line x1="${PL}" y1="${gy}" x2="${W-PR}" y2="${gy}"
             stroke="#3b6fd8" stroke-width="1" stroke-dasharray="6,4" opacity="0.55"/>`;
         out += `<text x="${PL+6}" y="${gy-4}" fill="#3b6fd8" font-size="8.5" opacity="0.7"
-            font-family="'Segoe UI',sans-serif">goal ${goalKcal}</text>`;
+            font-family="'Pixelify Sans',sans-serif">goal ${goalKcal}</text>`;
     }
 
     if (pts.length >= 2) {
@@ -2980,18 +2984,26 @@ function walkCalories(stepsK) {
     return Math.round(stepsK * 1000 * WALK_KCAL_PER_STEP * (WALK_WEIGHT_KG / WALK_REF_WEIGHT_KG));
 }
 
+// For Walk, calories are always derived from steps (field is read-only).
 function calcWalkCalories() {
     const k = parseStepsK(document.getElementById('cardioSteps').value);
-    if (k === null) return;
-    document.getElementById('cardioCalories').value = walkCalories(k);
+    document.getElementById('cardioCalories').value = k === null ? '' : walkCalories(k);
 }
 
 function fmtStepsK(k) {
     return (Math.round(k * 10) / 10) + 'K';
 }
 
+// Walk: show Steps, hide Duration, lock Calories (computed from steps).
 function updateStepsField() {
-    document.getElementById('cardioStepsField').style.display = cardioType === 'walk' ? '' : 'none';
+    const walk = cardioType === 'walk';
+    document.getElementById('cardioStepsField').style.display    = walk ? '' : 'none';
+    document.getElementById('cardioDurationField').style.display = walk ? 'none' : '';
+    const cal = document.getElementById('cardioCalories');
+    cal.readOnly = walk;
+    cal.classList.toggle('locked', walk);
+    cal.title = walk ? 'Calculated from steps' : '';
+    document.querySelectorAll('#cardioTab .cal-step').forEach(b => b.style.visibility = walk ? 'hidden' : '');
 }
 
 function selectCardioType(btn) {
@@ -3022,12 +3034,14 @@ function prefillCardio() {
     }
     const typeName = last.type ? last.type[0].toUpperCase() + last.type.slice(1) : 'Session';
     info.innerHTML = `Previous session · ${last.date} · ${typeName}: ` +
-        `<b>${last.duration ?? 0} min</b> · <b>${last.calories ?? 0} kcal</b>` +
+        (last.type === 'walk' && last.steps && !last.duration ? '' : `<b>${last.duration ?? 0} min</b> · `) +
+        `<b>${last.calories ?? 0} kcal</b>` +
         (last.steps ? ` · <b>${fmtStepsK(last.steps)} steps</b>` : '');
     document.getElementById('cardioDuration').value = last.duration ?? '';
     document.getElementById('cardioCalories').value = last.calories ?? '';
     document.getElementById('cardioSteps').value =
         (cardioType === 'walk' && last.type === 'walk' && last.steps) ? fmtStepsK(last.steps) : '';
+    if (cardioType === 'walk') calcWalkCalories();
 }
 
 
@@ -3042,7 +3056,7 @@ function renderCardioDay() {
         const type = CARDIO_TYPES.includes(s.type) ? s.type : 'other';
         return `<div class="cardio-item" style="--c:${CARDIO_COLORS[type]}">
             <span class="cardio-item-type">${type[0].toUpperCase() + type.slice(1)}</span>
-            <span class="cardio-item-stats"><b>${Number(s.duration) || 0}</b> min · <b>${Number(s.calories) || 0}</b> kcal${Number(s.steps) ? ` · <b>${fmtStepsK(Number(s.steps))}</b> steps` : ''}</span>
+            <span class="cardio-item-stats">${s.type === 'walk' && Number(s.steps) && !Number(s.duration) ? '' : `<b>${Number(s.duration) || 0}</b> min · `}<b>${Number(s.calories) || 0}</b> kcal${Number(s.steps) ? ` · <b>${fmtStepsK(Number(s.steps))}</b> steps` : ''}</span>
             <button type="button" class="cardio-del" onclick="deleteCardio(${Number(s.id)})" aria-label="Delete session" title="Delete session">✕</button>
         </div>`;
     }).join('');
@@ -3070,15 +3084,18 @@ async function deleteCardio(id) {
 async function saveCardio() {
     const date     = document.getElementById('cardioDate').value;
     if (!date) { flash('Pick a date first.', 'err'); return; }
-    const duration = toNum(document.getElementById('cardioDuration').value);
-    const calories = toNum(document.getElementById('cardioCalories').value);
-    const session = { id: Date.now(), date, type: cardioType, duration, calories };
+    let duration = toNum(document.getElementById('cardioDuration').value);
+    let calories = toNum(document.getElementById('cardioCalories').value);
+    let steps    = null;
     if (cardioType === 'walk') {
-        const rawSteps = document.getElementById('cardioSteps').value;
-        const stepsK   = parseStepsK(rawSteps);
-        if (rawSteps.trim() && stepsK === null) { flash('Steps: use a format like 1.2K or 10.5K.', 'err'); return; }
-        if (stepsK) session.steps = Math.round(stepsK * 10) / 10;   // stored in thousands
+        const stepsK = parseStepsK(document.getElementById('cardioSteps').value);
+        if (!stepsK) { flash('Enter steps, e.g. 1.2K or 10.5K.', 'err'); return; }
+        steps    = Math.round(stepsK * 10) / 10;   // stored in thousands
+        calories = walkCalories(steps);
+        duration = 0;
     }
+    const session = { id: Date.now(), date, type: cardioType, duration, calories };
+    if (steps !== null) session.steps = steps;
     if (!data._cardio) data._cardio = [];
     data._cardio.push(session);
     try {
@@ -3149,14 +3166,14 @@ function renderCardioChart() {
         const v = Math.round(maxCal * (1 - i / 4));
         out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
         if (v > 0 || i === 0) out += `<text x="${PL-7}" y="${y+4}" text-anchor="end"
-            fill="var(--muted)" font-size="9" font-family="'Segoe UI',sans-serif">${v}</text>`;
+            fill="var(--muted)" font-size="9" font-family="'Pixelify Sans',sans-serif">${v}</text>`;
     }
 
     // X labels (sample evenly)
     sampleIndices(allDates.length, cardioRange <= 14 ? allDates.length : 8).forEach(i => {
         const label = fmtDateLabel(allDates[i], cardioRange <= 30 ? 1 : 3);
         out += `<text x="${xOf(i)}" y="${H-PB+16}" text-anchor="middle"
-            fill="var(--muted)" font-size="9" font-family="'Segoe UI',sans-serif">${label}</text>`;
+            fill="var(--muted)" font-size="9" font-family="'Pixelify Sans',sans-serif">${label}</text>`;
     });
 
     // Stacked bars
@@ -3393,7 +3410,7 @@ function renderTrainingChart() {
     const barW  = Math.max(4, Math.min(40, slot - 4));
     const xOf   = i => PL + (i + 0.5) * slot;
     const yOf   = v => PT + (1 - v / maxN) * CH;
-    const font  = `font-family="'Segoe UI',sans-serif"`;
+    const font  = `font-family="'Pixelify Sans',sans-serif"`;
 
     let out = '';
     // Grid + integer Y labels
@@ -3523,7 +3540,7 @@ function renderProjectionChart() {
     function showMsg(msg) {
         statsEl.style.display = legendEl.style.display = disclEl.style.display = 'none';
         svg.innerHTML = `<text x="340" y="110" text-anchor="middle" fill="var(--muted)"
-            font-size="11" font-family="'Segoe UI',sans-serif">${msg}</text>`;
+            font-size="11" font-family="'Pixelify Sans',sans-serif">${msg}</text>`;
     }
 
     const profile = data._profile;
@@ -3622,7 +3639,7 @@ function renderProjectionChart() {
         const v = yMax - (i / 4) * (yMax - yMin);
         out += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
         out += `<text x="${PL-7}" y="${y+4}" text-anchor="end" fill="var(--muted)" font-size="9"
-            font-family="'Segoe UI',sans-serif">${v.toFixed(1)}</text>`;
+            font-family="'Pixelify Sans',sans-serif">${v.toFixed(1)}</text>`;
     }
 
     // X labels and tick lines
@@ -3641,7 +3658,7 @@ function renderProjectionChart() {
             stroke="${isToday ? 'var(--grid-hi)' : 'var(--grid2)'}" stroke-width="${isToday ? 1.5 : 1}"/>`;
         out += `<text x="${x}" y="${H-PB+16}" text-anchor="middle"
             fill="${isToday ? 'var(--blue)' : 'var(--muted)'}" font-weight="${isToday ? 600 : 400}"
-            font-size="9" font-family="'Segoe UI',sans-serif">${label}</text>`;
+            font-size="9" font-family="'Pixelify Sans',sans-serif">${label}</text>`;
     });
 
     // Target weight line
@@ -3650,7 +3667,7 @@ function renderProjectionChart() {
         out += `<line x1="${PL}" y1="${ty}" x2="${W-PR}" y2="${ty}"
             stroke="var(--gold)" stroke-width="1" stroke-dasharray="5,4" opacity="0.5"/>`;
         out += `<text x="${W-PR-4}" y="${ty-5}" text-anchor="end" fill="var(--gold)"
-            font-size="8.5" opacity="0.7" font-family="'Segoe UI',sans-serif">target ${profile.target} kg</text>`;
+            font-size="8.5" opacity="0.7" font-family="'Pixelify Sans',sans-serif">target ${profile.target} kg</text>`;
     }
 
     // Today divider (subtle vertical shading)
@@ -3692,7 +3709,7 @@ function renderProjectionChart() {
         const above = y > PT + 20;
         out += `<text x="${x}" y="${above ? y - 8 : y + 16}" text-anchor="middle"
             fill="#8b3ff7" font-size="9" font-weight="600"
-            font-family="'Segoe UI',sans-serif">${p.w.toFixed(1)}</text>`;
+            font-family="'Pixelify Sans',sans-serif">${p.w.toFixed(1)}</text>`;
     });
 
     svg.innerHTML = out;
