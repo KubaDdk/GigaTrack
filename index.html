@@ -1245,6 +1245,15 @@
         .menu-signout { border-top-width: var(--pxb); border-top-style: solid; border-radius: 0; }
         .menu-btn span { border-radius: 0; }
         .tab-btn.has-new::before { border-radius: 0; top: 6px; right: 6px; }
+        /* ── Centred card titles: headers with a title + controls stack, both centred ── */
+        .card-label { text-align: center; }
+        .chart-header,
+        .card > div[style*="display:flex"]:has(> .card-label) {
+            flex-direction: column;
+            justify-content: center !important;
+            align-items: center;
+            gap: 0.75rem;
+        }
     </style>
 </head>
 <body>
