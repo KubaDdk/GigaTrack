@@ -124,6 +124,9 @@
         [data-theme="retrowave"] .btn-primary:hover { box-shadow: 0 0 14px rgba(255, 47, 214, 0.35); }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        /* Pixelify Sans everywhere — buttons, inputs and selects don't inherit fonts by default. */
+        *, *::before, *::after,
+        button, input, select, textarea, option { font-family: 'Pixelify Sans', system-ui, sans-serif; }
 
         body {
             background: var(--bg);
