@@ -1254,6 +1254,22 @@
             align-items: center;
             gap: 0.75rem;
         }
+        /* ── Larger button text (tab buttons keep their size) ── */
+        .btn                    { font-size: 0.85rem; }
+        .btn-ghost[onclick="toggleProfile()"] { font-size: 0.78rem !important; padding: 0.4rem 0.9rem !important; }
+        .step-btn               { font-size: 1.2rem; }
+        .range-btn              { font-size: 0.78rem; padding: 0.4rem 0.8rem; }
+        .check-btn              { font-size: 0.95rem; }
+        .part-btn               { font-size: 0.9rem; }
+        .type-pill              { font-size: 0.78rem; padding: 0.4rem 0.9rem; }
+        .date-btn               { font-size: 0.7rem; }
+        .cardio-del             { font-size: 1.1rem; }
+        /* Cardio type buttons: bigger overall and filling the row */
+        .type-pill[data-type]   { font-size: 0.95rem; padding: 0.75rem 0.5rem; }
+        #cardioTab .type-pills  { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+        @media (max-width: 600px) {
+            #cardioTab .type-pills { grid-template-columns: repeat(3, 1fr); }
+        }
     </style>
 </head>
 <body>
