@@ -1207,6 +1207,7 @@
         .tab-btn.active, .range-btn.active,
         .part-btn.active, .type-pill.active      { --c: var(--pg-cyan); }
         .tab-btn.complete, .check-btn.done       { --c: var(--pg-green); }
+        .tab-btn.complete.active                 { --c: var(--pg-cyan); }   /* selected wins over complete (keeps the ✓) */
         .cardio-del                              { --c: var(--pg-red); }
         .date-btn.past                           { --c: var(--pg-gold); }
         .type-pill[data-type="run"].active       { --c: var(--pg-orange); }
