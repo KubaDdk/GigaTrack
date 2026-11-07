@@ -1132,20 +1132,26 @@
             .proj-stat { min-width: 78px; padding: 0.5rem 0.35rem; }
             .proj-stat-val { font-size: 0.9rem; }
         }
-        /* ── Pixel-art borders: chunky 3px edges with stepped (notched) corners ── */
+        /* ── Pixel-art borders: chunky 4px edges with stepped, pixel-rounded corners ── */
         :root { --px: 2px; --pxb: calc(var(--px) * 2); }   /* notch = 1 "pixel", border = 2 "pixels" */
         .btn, .step-btn, .field input, .type-pill, .range-btn, .check-btn, .part-btn,
         .tab-btn, .date-btn, .theme-select, .cardio-del, .menu-btn, .set-input {
             border-width: var(--pxb);
             border-style: solid;
             border-radius: 0;
+            /* two-step "pixel-rounded" corners: 3 px-units then 1 px-unit in from each edge */
+            --u1: var(--px); --u3: calc(var(--px) * 3);
             clip-path: polygon(
-                var(--px) 0, calc(100% - var(--px)) 0,
-                calc(100% - var(--px)) var(--px), 100% var(--px),
-                100% calc(100% - var(--px)), calc(100% - var(--px)) calc(100% - var(--px)),
-                calc(100% - var(--px)) 100%, var(--px) 100%,
-                var(--px) calc(100% - var(--px)), 0 calc(100% - var(--px)),
-                0 var(--px), var(--px) var(--px)
+                var(--u3) 0, calc(100% - var(--u3)) 0,
+                calc(100% - var(--u3)) var(--u1), calc(100% - var(--u1)) var(--u1),
+                calc(100% - var(--u1)) var(--u3), 100% var(--u3),
+                100% calc(100% - var(--u3)), calc(100% - var(--u1)) calc(100% - var(--u3)),
+                calc(100% - var(--u1)) calc(100% - var(--u1)), calc(100% - var(--u3)) calc(100% - var(--u1)),
+                calc(100% - var(--u3)) 100%, var(--u3) 100%,
+                var(--u3) calc(100% - var(--u1)), var(--u1) calc(100% - var(--u1)),
+                var(--u1) calc(100% - var(--u3)), 0 calc(100% - var(--u3)),
+                0 var(--u3), var(--u1) var(--u3),
+                var(--u1) var(--u1), var(--u3) var(--u1)
             );
         }
         /* pixel bevel: darker bottom/right edge on clickable buttons */
