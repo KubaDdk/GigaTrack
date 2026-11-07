@@ -457,6 +457,7 @@
         .part-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(91,143,255,.09); }
         .check-grid { display: grid; gap: 0.5rem; }
         .check-grid.five { grid-template-columns: repeat(5, 1fr); }
+        .check-grid.four { grid-template-columns: repeat(4, 1fr); }
         .check-grid.two  { grid-template-columns: repeat(2, 1fr); }
         .check-btn {
             padding: 0.95rem 0.4rem;
@@ -1459,13 +1460,16 @@
 
         <!-- Water -->
         <div class="card">
-            <div class="card-label">💧 Water <span class="daily-count" id="glassCount"></span></div>
-            <div class="check-grid five" id="glassChecks">
-                <button type="button" class="check-btn" data-i="0" onclick="toggleDaily('glasses', 5, this)">1</button>
-                <button type="button" class="check-btn" data-i="1" onclick="toggleDaily('glasses', 5, this)">2</button>
-                <button type="button" class="check-btn" data-i="2" onclick="toggleDaily('glasses', 5, this)">3</button>
-                <button type="button" class="check-btn" data-i="3" onclick="toggleDaily('glasses', 5, this)">4</button>
-                <button type="button" class="check-btn" data-i="4" onclick="toggleDaily('glasses', 5, this)">5</button>
+            <div class="card-label">💧 Glasses of water <span class="daily-count" id="glassCount"></span></div>
+            <div class="check-grid four" id="glassChecks">
+                <button type="button" class="check-btn" data-i="0" onclick="toggleDaily('glasses', WATER_GLASSES, this)">1</button>
+                <button type="button" class="check-btn" data-i="1" onclick="toggleDaily('glasses', WATER_GLASSES, this)">2</button>
+                <button type="button" class="check-btn" data-i="2" onclick="toggleDaily('glasses', WATER_GLASSES, this)">3</button>
+                <button type="button" class="check-btn" data-i="3" onclick="toggleDaily('glasses', WATER_GLASSES, this)">4</button>
+                <button type="button" class="check-btn" data-i="4" onclick="toggleDaily('glasses', WATER_GLASSES, this)">5</button>
+                <button type="button" class="check-btn" data-i="5" onclick="toggleDaily('glasses', WATER_GLASSES, this)">6</button>
+                <button type="button" class="check-btn" data-i="6" onclick="toggleDaily('glasses', WATER_GLASSES, this)">7</button>
+                <button type="button" class="check-btn" data-i="7" onclick="toggleDaily('glasses', WATER_GLASSES, this)">8</button>
             </div>
         </div>
 
@@ -1887,6 +1891,7 @@ function setTheme(theme) {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
+const WATER_GLASSES = 8;   // daily water target (number of glass buttons)
 const TABS = ['day', 'measurement', 'cardio', 'training', 'habits', 'food', 'projection', 'week', 'achievement', 'other', 'test'];
 let currentTab = 'day';
 
@@ -2129,7 +2134,7 @@ const TAB_COMPLETE = {
     training:    d => (data._strength || []).some(s => s.date === d),
     habits:      d => {
         const h = dailyHabits(d);
-        return countTrue(h.glasses) >= 5 && countTrue(h.meals) >= 4 && (!!h.noSpend || h.spent != null);
+        return countTrue(h.glasses) >= WATER_GLASSES && countTrue(h.meals) >= 4 && (!!h.noSpend || h.spent != null);
     },
     food:        d => { const e = data[d] || {}; return e.fat != null || e.carbs != null || e.protein != null; },
 };
@@ -2159,7 +2164,7 @@ const WEEK_RINGS = [
 // Habits ring: water + meals, partial credit (money has its own ring).
 function habitDayScore(d) {
     const h = dailyHabits(d);
-    return (Math.min(countTrue(h.glasses), 5) / 5 + Math.min(countTrue(h.meals), 4) / 4) / 2;
+    return (Math.min(countTrue(h.glasses), WATER_GLASSES) / WATER_GLASSES + Math.min(countTrue(h.meals), 4) / 4) / 2;
 }
 
 // Money ring: the day counts once money is logged (an amount or "nothing spent").
@@ -2227,7 +2232,7 @@ function dayItemsHTML(d) {
         item('🏋️', (t.parts || []).map(cap).join(', ') || 'Strength session'));
     const h = dailyHabits(d);
     const hp = [];
-    if (countTrue(h.glasses)) hp.push(`💧 ${countTrue(h.glasses)}/5`);
+    if (countTrue(h.glasses)) hp.push(`💧 ${countTrue(h.glasses)}/${WATER_GLASSES}`);
     if (countTrue(h.meals))   hp.push(`🍽️ ${countTrue(h.meals)}/4`);
     if (hp.length) item('✅', hp.join('&nbsp;&nbsp;'));
     if (h.noSpend)            item('💰', 'Nothing spent');
@@ -3213,7 +3218,7 @@ function renderDailyHabits() {
         document.querySelectorAll(`#${id} .check-btn`).forEach(b => b.classList.toggle('done', !!arr[+b.dataset.i]));
         document.getElementById(countId).textContent = `${arr.filter(Boolean).length}/${n}`;
     };
-    fill('glassChecks', 'glasses', 5, 'glassCount');
+    fill('glassChecks', 'glasses', WATER_GLASSES, 'glassCount');
     fill('mealChecks', 'meals', 4, 'mealCount');
     document.getElementById('noSpendBtn').classList.toggle('done', !!h.noSpend);
     renderSpendList(h);
