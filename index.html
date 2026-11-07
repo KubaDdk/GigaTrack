@@ -1161,17 +1161,86 @@
             clip-path: var(--px-clip);
         }
         .wk-day.selected { border-radius: 0; clip-path: var(--px-clip); }   /* highlight only, no border (keeps row height) */
-        /* pixel bevel: darker bottom/right edge on clickable buttons */
-        .btn, .step-btn, .type-pill, .range-btn, .check-btn, .part-btn, .tab-btn, .date-btn {
-            box-shadow: inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 rgba(0, 0, 0, 0.28);
+        /* ── Pixel game buttons ──────────────────────────────────────────────
+           Each button has one fill colour (--c). Outline, top highlight, bottom
+           3D shade and text colour are all derived from it with color-mix.
+           Inactive buttons use a neutral fill; active/selected ones get a colour. */
+        :root {
+            --pg-green: #8ee05a; --pg-cyan: #2fbff0; --pg-red: #f2606c;
+            --pg-orange: #ffa62b; --pg-gold: #f5c542; --pg-purple: #a98bff;
+            --pg-neutral: #2c2f4a; --pg-neutral-text: #c8c8e8;
+            --pg-field: #05050c; --pg-field-edge: #2c2f4a;
         }
-        .btn:active, .step-btn:active, .type-pill:active, .range-btn:active,
-        .check-btn:active, .part-btn:active, .tab-btn:active, .date-btn:active {
-            box-shadow: inset var(--px) var(--px) 0 rgba(0, 0, 0, 0.28);
-            transform: none;
+        :root[data-theme="light"] {
+            --pg-neutral: #dfe3f0; --pg-neutral-text: #3a3d5c;
+            --pg-field: #ffffff; --pg-field-edge: #9aa0bd;
         }
-        .tab-btn.complete.active { box-shadow: inset 0 0 0 var(--pxb) var(--green); }
-        .field input:focus { box-shadow: none; }
+        :root[data-theme="retrowave"] {
+            --pg-neutral: #3a1a6a; --pg-neutral-text: #f5e1ff;
+            --pg-field: #0d0221; --pg-field-edge: #5a2a9a;
+        }
+        .btn, .step-btn, .type-pill, .range-btn, .check-btn, .part-btn,
+        .tab-btn, .date-btn, .cardio-del, .menu-btn {
+            --c: var(--pg-neutral);
+            --t: var(--pg-neutral-text);
+            --c-edge: color-mix(in srgb, var(--c) 45%, #000);
+            --c-hi:   color-mix(in srgb, var(--c) 55%, #fff);
+            --c-sh:   color-mix(in srgb, var(--c) 72%, #000);
+            background: var(--c) !important;
+            color: var(--t) !important;
+            border-color: var(--c-edge) !important;
+            box-shadow:
+                inset 0 var(--px) 0 var(--c-hi),
+                inset 0 calc(-1 * var(--pxb)) 0 var(--c-sh) !important;
+            font-weight: 700;
+            text-shadow: none !important;
+            opacity: 1;
+            transition: filter 0.1s, transform 0.05s;
+        }
+        /* coloured (active / primary) buttons: dark text in the same hue */
+        .btn-primary, .step-btn, .cardio-del,
+        .tab-btn.active, .tab-btn.complete, .range-btn.active, .part-btn.active,
+        .check-btn.done, .type-pill.active, .date-btn.past {
+            --t: color-mix(in srgb, var(--c) 30%, #000);
+        }
+        .btn-primary, .step-btn                  { --c: var(--pg-cyan); }
+        .tab-btn.active, .range-btn.active,
+        .part-btn.active, .type-pill.active      { --c: var(--pg-cyan); }
+        .tab-btn.complete, .check-btn.done       { --c: var(--pg-green); }
+        .cardio-del                              { --c: var(--pg-red); }
+        .date-btn.past                           { --c: var(--pg-gold); }
+        .type-pill[data-type="run"].active       { --c: var(--pg-orange); }
+        .type-pill[data-type="walk"].active      { --c: var(--pg-green); }
+        .type-pill[data-type="bike"].active      { --c: var(--pg-cyan); }
+        .type-pill[data-type="stairs"].active    { --c: var(--pg-gold); }
+        .type-pill[data-type="other"].active     { --c: var(--pg-purple); }
+        .menu-btn span { background: var(--t) !important; }
+
+        .btn:hover, .step-btn:hover, .type-pill:hover, .range-btn:hover, .check-btn:hover,
+        .part-btn:hover, .tab-btn:hover, .date-btn:hover, .cardio-del:hover, .menu-btn:hover {
+            filter: brightness(1.12);
+            opacity: 1;
+        }
+        /* pressed: drop into the 3D shade */
+        .btn:active, .step-btn:active, .type-pill:active, .range-btn:active, .check-btn:active,
+        .part-btn:active, .tab-btn:active, .date-btn:active, .cardio-del:active {
+            transform: translateY(var(--px));
+            box-shadow: inset 0 var(--px) 0 var(--c-sh) !important;
+        }
+        .menu-btn:active { transform: translateY(-50%); }
+
+        /* inputs: sunken dark field with a pixel outline */
+        .field input, .theme-select, .set-input {
+            background: var(--pg-field) !important;
+            border-color: var(--pg-field-edge) !important;
+            box-shadow: inset 0 var(--pxb) 0 rgba(0, 0, 0, 0.45) !important;
+            color: var(--text);
+        }
+        .field input:focus, .theme-select:focus, .set-input:focus {
+            border-color: var(--pg-cyan) !important;
+            outline: none;
+        }
+        .field input.locked { opacity: 0.7; }
         .menu-signout { border-top-width: var(--pxb); border-top-style: solid; border-radius: 0; }
         .menu-btn span { border-radius: 0; }
         .tab-btn.has-new::before { border-radius: 0; top: 6px; right: 6px; }
