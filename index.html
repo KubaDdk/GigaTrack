@@ -1168,23 +1168,22 @@
         :root {
             --pg-green: #8ee05a; --pg-cyan: #2fbff0; --pg-red: #f2606c;
             --pg-orange: #ffa62b; --pg-gold: #f5c542; --pg-purple: #a98bff;
-            --pg-neutral: #2c2f4a; --pg-neutral-text: #c8c8e8; --pg-neutral-edge: #5c6290;
+            --pg-neutral: #4a5080; --pg-neutral-text: #e4e6ff;
             --pg-field: #05050c; --pg-field-edge: #2c2f4a;
         }
         :root[data-theme="light"] {
-            --pg-neutral: #dfe3f0; --pg-neutral-text: #3a3d5c; --pg-neutral-edge: #7a7f9c;
+            --pg-neutral: #dfe3f0; --pg-neutral-text: #3a3d5c;
             --pg-field: #ffffff; --pg-field-edge: #9aa0bd;
         }
         :root[data-theme="retrowave"] {
-            --pg-neutral: #3a1a6a; --pg-neutral-text: #f5e1ff; --pg-neutral-edge: #7d4cc4;
+            --pg-neutral: #6a3ab0; --pg-neutral-text: #f5e1ff;
             --pg-field: #0d0221; --pg-field-edge: #5a2a9a;
         }
         .btn, .step-btn, .type-pill, .range-btn, .check-btn, .part-btn,
         .tab-btn, .date-btn, .cardio-del, .menu-btn {
             --c: var(--pg-neutral);
             --t: var(--pg-neutral-text);
-            /* neutral outline is lighter than the fill so it shows on dark backgrounds */
-            --c-edge: var(--pg-neutral-edge);
+            --c-edge: color-mix(in srgb, var(--c) 45%, #000);   /* outline: darker than the fill */
             --c-hi:   color-mix(in srgb, var(--c) 55%, #fff);
             --c-sh:   color-mix(in srgb, var(--c) 72%, #000);
             background: var(--c) !important;
@@ -1203,7 +1202,6 @@
         .tab-btn.active, .tab-btn.complete, .range-btn.active, .part-btn.active,
         .check-btn.done, .type-pill.active, .date-btn.past {
             --t: color-mix(in srgb, var(--c) 30%, #000);
-            --c-edge: color-mix(in srgb, var(--c) 45%, #000);
         }
         .btn-primary, .step-btn                  { --c: var(--pg-cyan); }
         .tab-btn.active, .range-btn.active,
