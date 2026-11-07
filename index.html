@@ -1284,6 +1284,14 @@
                 </div>
             </div>
             <div class="last-session" id="cardioLast"></div>
+            <div class="field" id="cardioStepsField" style="display:none">
+                <label>Steps (thousands, e.g. 1.2K or 10.5K)</label>
+                <div class="stepper">
+                    <button type="button" class="step-btn" onclick="stepMeasure('cardioSteps', -0.5); calcWalkCalories()" aria-label="Decrease steps">▼</button>
+                    <input type="text" id="cardioSteps" inputmode="decimal" placeholder="0.0K" oninput="calcWalkCalories()">
+                    <button type="button" class="step-btn" onclick="stepMeasure('cardioSteps', 0.5); calcWalkCalories()" aria-label="Increase steps">▲</button>
+                </div>
+            </div>
             <div class="field">
                 <label>Duration (min)</label>
                 <div class="stepper">
@@ -2956,10 +2964,41 @@ const CARDIO_TYPES = ['run', 'walk', 'bike', 'stairs', 'other'];
 let cardioType  = 'run';
 let cardioRange = 7;
 
+// Walk calories: 10 000 steps × 0.04 kcal at a 70 kg reference body weight
+// (≈ 400 kcal), scaled linearly by body weight. Weight is fixed at 70 kg for now.
+const WALK_WEIGHT_KG       = 70;
+const WALK_KCAL_PER_STEP   = 0.04;   // at 70 kg
+const WALK_REF_WEIGHT_KG   = 70;
+
+// Parse "1.2K", "10.5k", "10,5" or "10.5" → thousands of steps (number), or null.
+function parseStepsK(v) {
+    const m = String(v || '').trim().replace(',', '.').match(/^(\d+(?:\.\d+)?)\s*k?$/i);
+    return m ? parseFloat(m[1]) : null;
+}
+
+function walkCalories(stepsK) {
+    return Math.round(stepsK * 1000 * WALK_KCAL_PER_STEP * (WALK_WEIGHT_KG / WALK_REF_WEIGHT_KG));
+}
+
+function calcWalkCalories() {
+    const k = parseStepsK(document.getElementById('cardioSteps').value);
+    if (k === null) return;
+    document.getElementById('cardioCalories').value = walkCalories(k);
+}
+
+function fmtStepsK(k) {
+    return (Math.round(k * 10) / 10) + 'K';
+}
+
+function updateStepsField() {
+    document.getElementById('cardioStepsField').style.display = cardioType === 'walk' ? '' : 'none';
+}
+
 function selectCardioType(btn) {
     document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     cardioType = btn.dataset.type;
+    updateStepsField();
     prefillCardio();
 }
 
@@ -2978,13 +3017,17 @@ function prefillCardio() {
         info.innerHTML = '';
         document.getElementById('cardioDuration').value = '';
         document.getElementById('cardioCalories').value = '';
+        document.getElementById('cardioSteps').value = '';
         return;
     }
     const typeName = last.type ? last.type[0].toUpperCase() + last.type.slice(1) : 'Session';
     info.innerHTML = `Previous session · ${last.date} · ${typeName}: ` +
-        `<b>${last.duration ?? 0} min</b> · <b>${last.calories ?? 0} kcal</b>`;
+        `<b>${last.duration ?? 0} min</b> · <b>${last.calories ?? 0} kcal</b>` +
+        (last.steps ? ` · <b>${fmtStepsK(last.steps)} steps</b>` : '');
     document.getElementById('cardioDuration').value = last.duration ?? '';
     document.getElementById('cardioCalories').value = last.calories ?? '';
+    document.getElementById('cardioSteps').value =
+        (cardioType === 'walk' && last.type === 'walk' && last.steps) ? fmtStepsK(last.steps) : '';
 }
 
 
@@ -2999,7 +3042,7 @@ function renderCardioDay() {
         const type = CARDIO_TYPES.includes(s.type) ? s.type : 'other';
         return `<div class="cardio-item" style="--c:${CARDIO_COLORS[type]}">
             <span class="cardio-item-type">${type[0].toUpperCase() + type.slice(1)}</span>
-            <span class="cardio-item-stats"><b>${Number(s.duration) || 0}</b> min · <b>${Number(s.calories) || 0}</b> kcal</span>
+            <span class="cardio-item-stats"><b>${Number(s.duration) || 0}</b> min · <b>${Number(s.calories) || 0}</b> kcal${Number(s.steps) ? ` · <b>${fmtStepsK(Number(s.steps))}</b> steps` : ''}</span>
             <button type="button" class="cardio-del" onclick="deleteCardio(${Number(s.id)})" aria-label="Delete session" title="Delete session">✕</button>
         </div>`;
     }).join('');
@@ -3029,8 +3072,15 @@ async function saveCardio() {
     if (!date) { flash('Pick a date first.', 'err'); return; }
     const duration = toNum(document.getElementById('cardioDuration').value);
     const calories = toNum(document.getElementById('cardioCalories').value);
+    const session = { id: Date.now(), date, type: cardioType, duration, calories };
+    if (cardioType === 'walk') {
+        const rawSteps = document.getElementById('cardioSteps').value;
+        const stepsK   = parseStepsK(rawSteps);
+        if (rawSteps.trim() && stepsK === null) { flash('Steps: use a format like 1.2K or 10.5K.', 'err'); return; }
+        if (stepsK) session.steps = Math.round(stepsK * 10) / 10;   // stored in thousands
+    }
     if (!data._cardio) data._cardio = [];
-    data._cardio.push({ id: Date.now(), date, type: cardioType, duration, calories });
+    data._cardio.push(session);
     try {
         await write();
         flash('Session logged!', 'ok');
