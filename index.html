@@ -124,6 +124,8 @@
         [data-theme="retrowave"] .btn-primary:hover { box-shadow: 0 0 14px rgba(255, 47, 214, 0.35); }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        /* pixel art: never smooth/blur images when they are scaled */
+        img { image-rendering: pixelated; image-rendering: crisp-edges; image-rendering: pixelated; }
         /* VT323 everywhere — buttons, inputs and selects don't inherit fonts by default. */
         *, *::before, *::after,
         button, input, select, textarea, option { font-family: 'VT323', system-ui, sans-serif; }
@@ -973,18 +975,25 @@
 
 
         /* ── Test tab: Jack pop-up ── */
+        /* --k = whole-number zoom (set in JS), so every art pixel is k×k screen pixels.
+           All sizes/offsets below are in Jack's own pixels × k. */
         .jack-stage {
+            --k: 3;
             position: fixed; left: 50%; bottom: 0; z-index: 9999;
-            width: min(150vw, 750px); aspect-ratio: 208 / 312;
-            transform: translate(-50%, 30%);   /* sit low: waist and lower abs below the screen edge */
+            width: calc(208px * var(--k)); height: calc(312px * var(--k));
+            margin-left: calc(-104px * var(--k));
+            transform: translateY(calc(94px * var(--k)));   /* sit low: waist and lower abs below the screen edge */
             pointer-events: none; display: none;
         }
         .jack-stage img {
-            position: absolute; inset: 0; width: 100%; height: 100%;
+            position: absolute; left: 0; top: 0; width: 100%; height: 100%;
             transform: translateY(110%);
         }
-        /* hand pops up beside Jack's chest, not over his face */
-        .jack-stage #jackThumb { left: -7%; top: 17%; width: 80%; height: 80%; }
+        /* hand (100×154 art) pops up beside Jack's chest, not over his face */
+        .jack-stage #jackThumb {
+            left: calc(4px * var(--k)); top: calc(90px * var(--k));
+            width: calc(100px * var(--k)); height: calc(154px * var(--k));
+        }
 
         /* ── Week tab ── */
         .wk-rings-wrap { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
@@ -1933,6 +1942,9 @@ function playThumbUp() {
     const thumb = document.getElementById('jackThumb');
     if (!stage || !jack.animate) return;
     [jack, thumb].forEach(el => el.getAnimations().forEach(a => a.cancel()));
+    // biggest whole-number zoom that keeps Jack about 1.5× the screen width (max 750px)
+    const k = Math.max(1, Math.round(Math.min(innerWidth * 1.5, 750) / 208));
+    stage.style.setProperty('--k', k);
     stage.style.display = 'block';
 
     const SLIDE = 450, HOLD = 1000, DELAY = 180;
